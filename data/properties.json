@@ -1,7 +1,6 @@
 {
   "shapes": {
     "cube": "SmoothCube_v2",
-    "sphere": "Sphere",
     "cylinder": "SmoothCylinder"
   },
   "stackable": {
