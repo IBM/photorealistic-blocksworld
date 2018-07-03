@@ -340,6 +340,15 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     with open(args.shape_color_combos_json, 'r') as f:
       shape_color_combos = list(json.load(f).items())
 
+  # compute the stack positions
+  stacks  = [[]]
+  stack_x = [0]
+  for i in range(args.max_stacks-1):
+    stacks.append([])
+    stack_x.append(stack_x[-1]+random.uniform(args.min_margin, args.max_margin))
+  center  = stack_x[-1] / 2
+  stack_x = [ x - center for x in stack_x ]
+
   positions = []
   objects = []
   blender_objects = []
