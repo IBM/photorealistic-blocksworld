@@ -71,6 +71,9 @@ parser.add_argument('--min-margin', default=1.5, type=float,
 parser.add_argument('--max-stacks', default=4, type=int,
                     help="the maximum number of stacks.")
 
+parser.add_argument('--object-jitter', default=0.2, type=int,
+                    help="the maximum number of stacks.")
+
 # Output settings
 parser.add_argument('--start-idx', default=0, type=int,
     help="The index at which to start for numbering rendered images. Setting " +
@@ -364,11 +367,12 @@ def build_random_stack(num_objects, args):
     stack_i   = random.choice(stackable)
     stack     = stacks[stack_i]
     
-    x = stack_x[stack_i]
+    x = stack_x[stack_i] + random.uniform(0,args.object_jitter)
     z = r
     if stack:
       for obj in stack:
         z += obj["size"]*2
+    y = random.uniform(0,args.object_jitter)
 
     obj = {
       'shape': shape_path,
