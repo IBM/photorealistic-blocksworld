@@ -349,7 +349,6 @@ def add_random_objects(scene_struct, num_objects, args, camera):
   center  = stack_x[-1] / 2
   stack_x = [ x - center for x in stack_x ]
 
-  positions = []
   objects = []
   blender_objects = []
   for i in range(num_objects):
@@ -416,7 +415,6 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     utils.add_object(args.shape_dir, shape_path, r, (x, y), theta=theta)
     obj = bpy.context.object
     blender_objects.append(obj)
-    positions.append((x, y, r))
 
     # Attach a random material
     mat_name_out, mat_name = random.choice(material_mapping)
