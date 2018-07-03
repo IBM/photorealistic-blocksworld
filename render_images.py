@@ -352,7 +352,7 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     # Choose a random size
     size_name, r = random.choice(size_mapping)
     # For cube, adjust the size a bit
-    if shape_path == 'Cube':
+    if shape_name == 'cube':
       r /= math.sqrt(2)
 
     # Choose x and z
