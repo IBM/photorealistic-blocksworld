@@ -44,29 +44,29 @@ if INSIDE_BLENDER:
 parser = argparse.ArgumentParser()
 
 # Input options
-parser.add_argument('--base_scene_blendfile', default='data/base_scene.blend',
+parser.add_argument('--base-scene-blendfile', default='data/base_scene.blend',
     help="Base blender file on which all scenes are based; includes " +
           "ground plane, lights, and camera.")
-parser.add_argument('--properties_json', default='data/properties.json',
+parser.add_argument('--properties-json', default='data/properties.json',
     help="JSON file defining objects, materials, sizes, and colors. " +
          "The \"colors\" field maps from CLEVR color names to RGB values; " +
          "The \"sizes\" field maps from CLEVR size names to scalars used to " +
          "rescale object models; the \"materials\" and \"shapes\" fields map " +
          "from CLEVR material and shape names to .blend files in the " +
-         "--object_material_dir and --shape_dir directories respectively.")
-parser.add_argument('--shape_dir', default='data/shapes',
+         "--object-material-dir and --shape-dir directories respectively.")
+parser.add_argument('--shape-dir', default='data/shapes',
     help="Directory where .blend files for object models are stored")
-parser.add_argument('--material_dir', default='data/materials',
+parser.add_argument('--material-dir', default='data/materials',
     help="Directory where .blend files for materials are stored")
-parser.add_argument('--shape_color_combos_json', default=None,
+parser.add_argument('--shape-color-combos-json', default=None,
     help="Optional path to a JSON file mapping shape names to a list of " +
          "allowed color names for that shape. This allows rendering images " +
          "for CLEVR-CoGenT.")
 
 # Settings for objects
-parser.add_argument('--min_objects', default=3, type=int,
+parser.add_argument('--min-objects', default=10, type=int,
     help="The minimum number of objects to place in each scene")
-parser.add_argument('--max_objects', default=10, type=int,
+parser.add_argument('--max-objects', default=10, type=int,
     help="The maximum number of objects to place in each scene")
 parser.add_argument('--min_dist', default=0.25, type=float,
     help="The minimum allowed distance between object centers")
@@ -83,35 +83,35 @@ parser.add_argument('--max_retries', default=50, type=int,
          "re-placing all objects in the scene.")
 
 # Output settings
-parser.add_argument('--start_idx', default=0, type=int,
+parser.add_argument('--start-idx', default=0, type=int,
     help="The index at which to start for numbering rendered images. Setting " +
          "this to non-zero values allows you to distribute rendering across " +
          "multiple machines and recombine the results later.")
-parser.add_argument('--num_images', default=5, type=int,
+parser.add_argument('--num-images', default=5, type=int,
     help="The number of images to render")
-parser.add_argument('--filename_prefix', default='CLEVR',
+parser.add_argument('--filename-prefix', default='CLEVR',
     help="This prefix will be prepended to the rendered images and JSON scenes")
 parser.add_argument('--split', default='new',
     help="Name of the split for which we are rendering. This will be added to " +
          "the names of rendered images, and will also be stored in the JSON " +
          "scene structure for each image.")
-parser.add_argument('--output_image_dir', default='../output/images/',
+parser.add_argument('--output-image-dir', default='output/images/',
     help="The directory where output images will be stored. It will be " +
          "created if it does not exist.")
-parser.add_argument('--output_scene_dir', default='../output/scenes/',
+parser.add_argument('--output-scene-dir', default='output/scenes/',
     help="The directory where output JSON scene structures will be stored. " +
          "It will be created if it does not exist.")
-parser.add_argument('--output_scene_file', default='../output/CLEVR_scenes.json',
+parser.add_argument('--output-scene-file', default='output/CLEVR_scenes.json',
     help="Path to write a single JSON file containing all scene information")
-parser.add_argument('--output_blend_dir', default='output/blendfiles',
+parser.add_argument('--output-blend-dir', default='output/blendfiles',
     help="The directory where blender scene files will be stored, if the " +
          "user requested that these files be saved using the " +
-         "--save_blendfiles flag; in this case it will be created if it does " +
+         "--save-blendfiles flag; in this case it will be created if it does " +
          "not already exist.")
-parser.add_argument('--save_blendfiles', type=int, default=0,
-    help="Setting --save_blendfiles 1 will cause the blender scene file for " +
+parser.add_argument('--save-blendfiles', type=int, default=0,
+    help="Setting --save-blendfiles 1 will cause the blender scene file for " +
          "each generated image to be stored in the directory specified by " +
-         "the --output_blend_dir flag. These files are not saved by default " +
+         "the --output-blend-dir flag. These files are not saved by default " +
          "because they take up ~5-10MB each.")
 parser.add_argument('--version', default='1.0',
     help="String to store in the \"version\" field of the generated JSON file")
@@ -123,30 +123,30 @@ parser.add_argument('--date', default=dt.today().strftime("%m/%d/%Y"),
          "defaults to today's date")
 
 # Rendering options
-parser.add_argument('--use_gpu', default=0, type=int,
-    help="Setting --use_gpu 1 enables GPU-accelerated rendering using CUDA. " +
+parser.add_argument('--use-gpu', default=0, type=int,
+    help="Setting --use-gpu 1 enables GPU-accelerated rendering using CUDA. " +
          "You must have an NVIDIA GPU with the CUDA toolkit installed for " +
          "to work.")
 parser.add_argument('--width', default=320, type=int,
     help="The width (in pixels) for the rendered images")
 parser.add_argument('--height', default=240, type=int,
     help="The height (in pixels) for the rendered images")
-parser.add_argument('--key_light_jitter', default=1.0, type=float,
+parser.add_argument('--key-light-jitter', default=1.0, type=float,
     help="The magnitude of random jitter to add to the key light position.")
-parser.add_argument('--fill_light_jitter', default=1.0, type=float,
+parser.add_argument('--fill-light-jitter', default=1.0, type=float,
     help="The magnitude of random jitter to add to the fill light position.")
-parser.add_argument('--back_light_jitter', default=1.0, type=float,
+parser.add_argument('--back-light-jitter', default=1.0, type=float,
     help="The magnitude of random jitter to add to the back light position.")
-parser.add_argument('--camera_jitter', default=0.5, type=float,
+parser.add_argument('--camera-jitter', default=0.5, type=float,
     help="The magnitude of random jitter to add to the camera position")
-parser.add_argument('--render_num_samples', default=512, type=int,
+parser.add_argument('--render-num-samples', default=512, type=int,
     help="The number of samples to use when rendering. Larger values will " +
          "result in nicer images but will cause rendering to take longer.")
-parser.add_argument('--render_min_bounces', default=8, type=int,
+parser.add_argument('--render-min-bounces', default=8, type=int,
     help="The minimum number of bounces to use for rendering.")
-parser.add_argument('--render_max_bounces', default=8, type=int,
+parser.add_argument('--render-max-bounces', default=8, type=int,
     help="The maximum number of bounces to use for rendering.")
-parser.add_argument('--render_tile_size', default=256, type=int,
+parser.add_argument('--render-tile-size', default=256, type=int,
     help="The tile size to use for rendering. This should not affect the " +
          "quality of the rendered image but may affect the speed; CPU-based " +
          "rendering may achieve better performance using smaller tile sizes " +
