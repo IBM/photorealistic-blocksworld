@@ -409,6 +409,11 @@ def add_objects(scene_struct, camera, objects):
     utils.add_material(obj["material"], Color=obj["color"])
   return blender_objects
 
+def build_successor_stack(stacks):
+  # TBP
+  pass
+
+
 def compute_all_relationships(scene_struct, eps=0.2):
   """
   Computes relationships between all pairs of objects in the scene.
