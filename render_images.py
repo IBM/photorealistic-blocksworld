@@ -315,6 +315,9 @@ def render_scene(args,
   if output_blendfile is not None:
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)
 
+def random_dict(dict):
+  return random.choice(list(dict.items()))
+
 def build_random_stack(num_objects, args):
   """
   create a list of lists of objects
@@ -327,9 +330,6 @@ def build_random_stack(num_objects, args):
       name : [float(c) / 255.0 for c in rgb] + [1.0] \
       for name, rgb in properties['colors'].items()
     }
-    material_mapping = list(properties['materials'].items())
-    object_mapping   = list(properties['shapes'].items())
-    size_mapping     = list(properties['sizes'].items())
 
   # compute the stack positions
   stacks  = [[]]
@@ -344,12 +344,11 @@ def build_random_stack(num_objects, args):
   objects         = []
   for i in range(num_objects):
     
-    # Choose a random color and shape
-    shape_name, shape_path = random.choice(object_mapping)
-    color_name, rgba = random.choice(list(color_name_to_rgba.items()))
-    
-    # Choose a random size
-    size_name, r = random.choice(size_mapping)
+    shape_name, shape_path = random_dict(properties['shapes'])
+    _, rgba                = random_dict(color_name_to_rgba)
+    _, r                   = random_dict(properties['sizes'])
+    _, material_path       = random_dict(properties['materials'])
+    rotation               = 360.0 * random.random()
     # For cube, adjust the size a bit
     if shape_name == 'cube':
       r /= math.sqrt(2)
@@ -370,12 +369,6 @@ def build_random_stack(num_objects, args):
     if stack:
       for obj in stack:
         z += obj["size"]*2
-    
-    # Choose a random orientation for the object.
-    rotation = 360.0 * random.random()
-
-    # Attach a random material
-    material_name, material_path = random.choice(material_mapping)
 
     obj = {
       'shape': shape_path,
