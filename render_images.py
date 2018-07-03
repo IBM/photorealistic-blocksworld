@@ -327,10 +327,10 @@ def add_random_objects(scene_struct, num_objects, args, camera):
   # Load the property file
   with open(args.properties_json, 'r') as f:
     properties = json.load(f)
-    color_name_to_rgba = {}
-    for name, rgb in properties['colors'].items():
-      rgba = [float(c) / 255.0 for c in rgb] + [1.0]
-      color_name_to_rgba[name] = rgba
+    color_name_to_rgba = {
+      name : [float(c) / 255.0 for c in rgb] + [1.0] \
+      for name, rgb in properties['colors'].items()
+    }
     material_mapping = list(properties['materials'].items())
     object_mapping   = list(properties['shapes'].items())
     size_mapping     = list(properties['sizes'].items())
