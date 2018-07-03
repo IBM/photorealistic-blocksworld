@@ -400,15 +400,15 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     blender_objects.append(bobj)
 
     # Attach a random material
-    mat_name_out, mat_name = random.choice(material_mapping)
-    utils.add_material(mat_name, Color=rgba)
+    material_name, material_path = random.choice(material_mapping)
+    utils.add_material(material_path, Color=rgba)
 
     # Record data about the object in the scene data structure
     obj = {
       'shape': shape_name,
       'size': size_name,
       'stackable': properties['stackable'][shape_name] == 1,
-      'material': mat_name_out,
+      'material': material_name,
       '3d_coords': tuple(bobj.location),
       'rotation': theta,
       'pixel_coords': utils.get_camera_coords(camera, bobj.location),
