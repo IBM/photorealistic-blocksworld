@@ -296,7 +296,8 @@ def render_scene(args,
       bpy.data.objects['Lamp_Fill'].location[i] += rand(args.fill_light_jitter)
 
   # Now make some random objects
-  objects, blender_objects = add_random_objects(scene_struct, num_objects, args, camera)
+  objects, stack_x, stacks = build_random_stack(num_objects, args)
+  blender_objects = add_objects(scene_struct, camera, objects)
 
   # Render the scene and dump the scene data structure
   scene_struct['objects'] = objects
@@ -314,10 +315,9 @@ def render_scene(args,
   if output_blendfile is not None:
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)
 
-
-def add_random_objects(scene_struct, num_objects, args, camera):
+def build_random_stack(num_objects, args):
   """
-  Add random objects to the current blender scene
+  create a list of lists of objects
   """
 
   # Load the property file
@@ -342,7 +342,6 @@ def add_random_objects(scene_struct, num_objects, args, camera):
 
   # adding objects
   objects         = []
-  blender_objects = []
   for i in range(num_objects):
     
     # Choose a random color and shape
@@ -357,14 +356,11 @@ def add_random_objects(scene_struct, num_objects, args, camera):
 
     # Choose x and z
     stackable = [ i for i, stack in enumerate(stacks) if \
-                  (not stack or (properties['stackable'][stack[-1]["shape"]] == 1)) ]
+                  ((not stack) or stack[-1]["stackable"]) ]
     if not stackable:
       print("!!!!!! retry stacking !!!!!!")
-      # If we can place no more objects, then delete all
-      # the objects in the scene and start over.
-      for obj in blender_objects:
-        utils.delete_object(obj)
-      return add_random_objects(scene_struct, num_objects, args, camera)
+      # If we can place no more objects, start over.
+      return build_random_stack(num_objects, args)
       
     stack_i   = random.choice(stackable)
     stack     = stacks[stack_i]
@@ -373,36 +369,45 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     z = r
     if stack:
       for obj in stack:
-        z += properties["sizes"][obj["size"]]*2
+        z += obj["size"]*2
     
     # Choose a random orientation for the object.
-    theta = 360.0 * random.random()
-
-    # Actually add the object to the scene
-    utils.add_object(args.shape_dir, shape_path, r, (x, z), theta=theta)
-    bobj = bpy.context.object
-    blender_objects.append(bobj)
+    rotation = 360.0 * random.random()
 
     # Attach a random material
     material_name, material_path = random.choice(material_mapping)
-    utils.add_material(material_path, Color=rgba)
 
-    # Record data about the object in the scene data structure
     obj = {
-      'shape': shape_name,
-      'size': size_name,
+      'shape': shape_path,
+      'size': r,
       'stackable': properties['stackable'][shape_name] == 1,
-      'material': material_name,
-      '3d_coords': tuple(bobj.location),
-      'rotation': theta,
-      'pixel_coords': utils.get_camera_coords(camera, bobj.location),
-      'color': color_name,
+      'material': material_path,
+      'location':(x,0,z),
+      'rotation': rotation,
+      'color':rgba,
     }
     objects.append(obj)
     stack.append(obj)
 
-  return objects, blender_objects
+  return objects, stack_x, stacks
 
+def add_objects(scene_struct, camera, objects):
+  """
+  Add objects to the current blender scene
+  """
+  blender_objects = []
+  for obj in objects:
+    
+    # Actually add the object to the scene
+    utils.add_object(args.shape_dir,
+                     obj["shape"],
+                     obj["size"],
+                     obj["location"],
+                     theta=obj["rotation"])
+    bobj = bpy.context.object
+    blender_objects.append(bobj)
+    utils.add_material(obj["material"], Color=obj["color"])
+  return blender_objects
 
 def compute_all_relationships(scene_struct, eps=0.2):
   """
