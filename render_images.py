@@ -58,10 +58,6 @@ parser.add_argument('--shape-dir', default='data/shapes',
     help="Directory where .blend files for object models are stored")
 parser.add_argument('--material-dir', default='data/materials',
     help="Directory where .blend files for materials are stored")
-parser.add_argument('--shape-color-combos-json', default=None,
-    help="Optional path to a JSON file mapping shape names to a list of " +
-         "allowed color names for that shape. This allows rendering images " +
-         "for CLEVR-CoGenT.")
 
 # Settings for objects
 parser.add_argument('--num-objects', default=4, type=int,
@@ -335,11 +331,6 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     object_mapping   = list(properties['shapes'].items())
     size_mapping     = list(properties['sizes'].items())
 
-  shape_color_combos = None
-  if args.shape_color_combos_json is not None:
-    with open(args.shape_color_combos_json, 'r') as f:
-      shape_color_combos = list(json.load(f).items())
-
   # compute the stack positions
   stacks  = [[]]
   stack_x = [0]
@@ -355,14 +346,8 @@ def add_random_objects(scene_struct, num_objects, args, camera):
   for i in range(num_objects):
     
     # Choose a random color and shape
-    if shape_color_combos is None:
-      shape_name, shape_path = random.choice(object_mapping)
-      color_name, rgba = random.choice(list(color_name_to_rgba.items()))
-    else:
-      shape_name, color_choices = random.choice(shape_color_combos)
-      color_name = random.choice(color_choices)
-      shape_path = properties['shapes'][shape_name]
-      rgba = color_name_to_rgba[color_name]
+    shape_name, shape_path = random.choice(object_mapping)
+    color_name, rgba = random.choice(list(color_name_to_rgba.items()))
     
     # Choose a random size
     size_name, r = random.choice(size_mapping)
