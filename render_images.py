@@ -349,50 +349,10 @@ def add_random_objects(scene_struct, num_objects, args, camera):
   center  = stack_x[-1] / 2
   stack_x = [ x - center for x in stack_x ]
 
-  objects = []
+  # adding objects
+  objects         = []
   blender_objects = []
   for i in range(num_objects):
-    # Choose a random size
-    size_name, r = random.choice(size_mapping)
-
-    # Try to place the object, ensuring that we don't intersect any existing
-    # objects and that we are more than the desired margin away from all existing
-    # objects along all cardinal directions.
-    num_tries = 0
-    while True:
-      # If we try and fail to place an object too many times, then delete all
-      # the objects in the scene and start over.
-      num_tries += 1
-      if num_tries > args.max_retries:
-        for obj in blender_objects:
-          utils.delete_object(obj)
-        return add_random_objects(scene_struct, num_objects, args, camera)
-      x = random.uniform(-3, 3)
-      y = random.uniform(-3, 3)
-      # Check to make sure the new object is further than min_dist from all
-      # other objects, and further than margin along the four cardinal directions
-      dists_good = True
-      margins_good = True
-      for (xx, yy, rr) in positions:
-        dx, dy = x - xx, y - yy
-        dist = math.sqrt(dx * dx + dy * dy)
-        if dist - r - rr < args.min_dist:
-          dists_good = False
-          break
-        for direction_name in ['left', 'right', 'front', 'behind']:
-          direction_vec = scene_struct['directions'][direction_name]
-          assert direction_vec[2] == 0
-          margin = dx * direction_vec[0] + dy * direction_vec[1]
-          if 0 < margin < args.margin:
-            print(margin, args.margin, direction_name)
-            print('BROKEN MARGIN!')
-            margins_good = False
-            break
-        if not margins_good:
-          break
-
-      if dists_good and margins_good:
-        break
     
     # Choose a random color and shape
     if shape_color_combos is None:
@@ -403,16 +363,39 @@ def add_random_objects(scene_struct, num_objects, args, camera):
       color_name = random.choice(color_choices)
       shape_path = properties['shapes'][shape_name]
       rgba = color_name_to_rgba[color_name]
-
+    
+    # Choose a random size
+    size_name, r = random.choice(size_mapping)
     # For cube, adjust the size a bit
     if shape_path == 'Cube':
       r /= math.sqrt(2)
 
-    # Choose random orientation for the object.
+    # Choose x and z
+    stackable = [ i for i, stack in enumerate(stacks) if \
+                  (not stack or (properties['stackable'][stack[-1]["shape"]] == 1)) ]
+    if not stackable:
+      print("!!!!!! retry stacking !!!!!!")
+      # If we can place no more objects, then delete all
+      # the objects in the scene and start over.
+      for obj in blender_objects:
+        utils.delete_object(obj)
+      return add_random_objects(scene_struct, num_objects, args, camera)
+      
+    stack_i   = random.choice(stackable)
+    stack     = stacks[stack_i]
+    
+    x = stack_x[stack_i]
+    if not stack:
+      # empty stack
+      z = r
+    else:
+      z = stack[-1]["3d_coords"][2] + properties["sizes"][stack[-1]["size"]] + r
+    
+    # Choose a random orientation for the object.
     theta = 360.0 * random.random()
 
     # Actually add the object to the scene
-    utils.add_object(args.shape_dir, shape_path, r, (x, y), theta=theta)
+    utils.add_object(args.shape_dir, shape_path, r, (x, z), theta=theta)
     bobj = bpy.context.object
     blender_objects.append(bobj)
 
@@ -432,6 +415,7 @@ def add_random_objects(scene_struct, num_objects, args, camera):
       'color': color_name,
     }
     objects.append(obj)
+    stack.append(obj)
 
   return objects, blender_objects
 
