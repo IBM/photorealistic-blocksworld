@@ -397,23 +397,23 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     
     # Choose a random color and shape
     if shape_color_combos is None:
-      obj_name_out, obj_name = random.choice(object_mapping)
+      shape_name, shape_path = random.choice(object_mapping)
       color_name, rgba = random.choice(list(color_name_to_rgba.items()))
     else:
-      obj_name_out, color_choices = random.choice(shape_color_combos)
+      shape_name, color_choices = random.choice(shape_color_combos)
       color_name = random.choice(color_choices)
-      obj_name = properties['shapes'][obj_name_out]
+      shape_path = properties['shapes'][shape_name]
       rgba = color_name_to_rgba[color_name]
 
     # For cube, adjust the size a bit
-    if obj_name == 'Cube':
+    if shape_path == 'Cube':
       r /= math.sqrt(2)
 
     # Choose random orientation for the object.
     theta = 360.0 * random.random()
 
     # Actually add the object to the scene
-    utils.add_object(args.shape_dir, obj_name, r, (x, y), theta=theta)
+    utils.add_object(args.shape_dir, shape_path, r, (x, y), theta=theta)
     obj = bpy.context.object
     blender_objects.append(obj)
     positions.append((x, y, r))
@@ -425,7 +425,7 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     # Record data about the object in the scene data structure
     pixel_coords = utils.get_camera_coords(camera, obj.location)
     objects.append({
-      'shape': obj_name_out,
+      'shape': shape_name,
       'size': size_name,
       'material': mat_name_out,
       '3d_coords': tuple(obj.location),
