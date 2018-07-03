@@ -421,16 +421,17 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     utils.add_material(mat_name, Color=rgba)
 
     # Record data about the object in the scene data structure
-    pixel_coords = utils.get_camera_coords(camera, obj.location)
-    objects.append({
+    obj = {
       'shape': shape_name,
       'size': size_name,
+      'stackable': properties['stackable'][shape_name] == 1,
       'material': mat_name_out,
       '3d_coords': tuple(obj.location),
       'rotation': theta,
-      'pixel_coords': pixel_coords,
+      'pixel_coords': utils.get_camera_coords(camera, obj.location),
       'color': color_name,
-    })
+    }
+    objects.append(obj)
 
   return objects, blender_objects
 
