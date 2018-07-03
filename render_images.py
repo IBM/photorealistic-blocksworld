@@ -331,9 +331,9 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     for name, rgb in properties['colors'].items():
       rgba = [float(c) / 255.0 for c in rgb] + [1.0]
       color_name_to_rgba[name] = rgba
-    material_mapping = [(v, k) for k, v in properties['materials'].items()]
-    object_mapping = [(v, k) for k, v in properties['shapes'].items()]
-    size_mapping = list(properties['sizes'].items())
+    material_mapping = list(properties['materials'].items())
+    object_mapping   = list(properties['shapes'].items())
+    size_mapping     = list(properties['sizes'].items())
 
   shape_color_combos = None
   if args.shape_color_combos_json is not None:
@@ -394,15 +394,15 @@ def add_random_objects(scene_struct, num_objects, args, camera):
 
       if dists_good and margins_good:
         break
-
-    # Choose random color and shape
+    
+    # Choose a random color and shape
     if shape_color_combos is None:
-      obj_name, obj_name_out = random.choice(object_mapping)
+      obj_name_out, obj_name = random.choice(object_mapping)
       color_name, rgba = random.choice(list(color_name_to_rgba.items()))
     else:
       obj_name_out, color_choices = random.choice(shape_color_combos)
       color_name = random.choice(color_choices)
-      obj_name = [k for k, v in object_mapping if v == obj_name_out][0]
+      obj_name = properties['shapes'][obj_name_out]
       rgba = color_name_to_rgba[color_name]
 
     # For cube, adjust the size a bit
@@ -419,7 +419,7 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     positions.append((x, y, r))
 
     # Attach a random material
-    mat_name, mat_name_out = random.choice(material_mapping)
+    mat_name_out, mat_name = random.choice(material_mapping)
     utils.add_material(mat_name, Color=rgba)
 
     # Record data about the object in the scene data structure
