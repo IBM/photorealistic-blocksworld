@@ -385,11 +385,10 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     stack     = stacks[stack_i]
     
     x = stack_x[stack_i]
-    if not stack:
-      # empty stack
-      z = r
-    else:
-      z = stack[-1]["3d_coords"][2] + properties["sizes"][stack[-1]["size"]] + r
+    z = r
+    if stack:
+      for obj in stack:
+        z += properties["sizes"][obj["size"]]*2
     
     # Choose a random orientation for the object.
     theta = 360.0 * random.random()
