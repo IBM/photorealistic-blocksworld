@@ -64,23 +64,16 @@ parser.add_argument('--shape-color-combos-json', default=None,
          "for CLEVR-CoGenT.")
 
 # Settings for objects
-parser.add_argument('--min-objects', default=10, type=int,
-    help="The minimum number of objects to place in each scene")
-parser.add_argument('--max-objects', default=10, type=int,
-    help="The maximum number of objects to place in each scene")
-parser.add_argument('--min_dist', default=0.25, type=float,
-    help="The minimum allowed distance between object centers")
-parser.add_argument('--margin', default=0.4, type=float,
-    help="Along all cardinal directions (left, right, front, back), all " +
-         "objects will be at least this distance apart. This makes resolving " +
-         "spatial relationships slightly less ambiguous.")
-parser.add_argument('--min_pixels_per_object', default=200, type=int,
-    help="All objects will have at least this many visible pixels in the " +
-         "final rendered images; this ensures that no objects are fully " +
-         "occluded by other objects.")
-parser.add_argument('--max_retries', default=50, type=int,
-    help="The number of times to try placing an object before giving up and " +
-         "re-placing all objects in the scene.")
+parser.add_argument('--num-objects', default=4, type=int,
+    help="The number of objects to place in each scene")
+
+parser.add_argument('--max-margin', default=2.0, type=float,
+                    help="the maximum margin between the stacks")
+parser.add_argument('--min-margin', default=1.5, type=float,
+                    help="the minimum margin between the stacks")
+
+parser.add_argument('--max-stacks', default=4, type=int,
+                    help="the maximum number of stacks.")
 
 # Output settings
 parser.add_argument('--start-idx', default=0, type=int,
@@ -177,7 +170,7 @@ def main(args):
     blend_path = None
     if args.save_blendfiles == 1:
       blend_path = blend_template % (i + args.start_idx)
-    num_objects = random.randint(args.min_objects, args.max_objects)
+    num_objects = args.num_objects
     render_scene(args,
       num_objects=num_objects,
       output_index=(i + args.start_idx),
