@@ -413,8 +413,8 @@ def add_random_objects(scene_struct, num_objects, args, camera):
 
     # Actually add the object to the scene
     utils.add_object(args.shape_dir, shape_path, r, (x, y), theta=theta)
-    obj = bpy.context.object
-    blender_objects.append(obj)
+    bobj = bpy.context.object
+    blender_objects.append(bobj)
 
     # Attach a random material
     mat_name_out, mat_name = random.choice(material_mapping)
@@ -426,9 +426,9 @@ def add_random_objects(scene_struct, num_objects, args, camera):
       'size': size_name,
       'stackable': properties['stackable'][shape_name] == 1,
       'material': mat_name_out,
-      '3d_coords': tuple(obj.location),
+      '3d_coords': tuple(bobj.location),
       'rotation': theta,
-      'pixel_coords': utils.get_camera_coords(camera, obj.location),
+      'pixel_coords': utils.get_camera_coords(camera, bobj.location),
       'color': color_name,
     }
     objects.append(obj)
