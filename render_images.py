@@ -421,11 +421,11 @@ def compute_all_relationships(scene_struct, eps=0.2):
     if name == 'above' or name == 'below': continue
     all_relationships[name] = []
     for i, obj1 in enumerate(scene_struct['objects']):
-      coords1 = obj1['3d_coords']
+      coords1 = obj1['location']
       related = set()
       for j, obj2 in enumerate(scene_struct['objects']):
         if obj1 == obj2: continue
-        coords2 = obj2['3d_coords']
+        coords2 = obj2['location']
         diff = [coords2[k] - coords1[k] for k in [0, 1, 2]]
         dot = sum(diff[k] * direction_vec[k] for k in [0, 1, 2])
         if dot > eps:
