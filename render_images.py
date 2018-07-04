@@ -160,6 +160,10 @@ def main(args):
     os.makedirs(args.output_scene_dir)
   if args.save_blendfiles == 1 and not os.path.isdir(args.output_blend_dir):
     os.makedirs(args.output_blend_dir)
+
+  # set up objects (except locations)
+  objects = initialize_objects(args)
+  stack_x = initialize_stack_x(args)
   
   all_scene_paths = []
   for i in range(args.num_images):
@@ -169,10 +173,9 @@ def main(args):
     blend_path = None
     if args.save_blendfiles == 1:
       blend_path = blend_template % (i + args.start_idx)
-    num_objects = args.num_objects
 
-    objects_pre, stack_x, stacks = build_random_stack(num_objects, args)
-    objects_suc,       _, _      = build_successor_stack(stacks, stack_x)
+    objects_pre, stacks = build_random_stack(objects, stack_x)
+    objects_suc         = build_successor_stack(stacks, stack_x)
     
     render_scene(args,
       output_index=(i + args.start_idx),
@@ -208,8 +211,6 @@ def main(args):
   }
   with open(args.output_scene_file, 'w') as f:
     json.dump(output, f)
-
-
 
 def render_scene(args,
     output_index=0,
@@ -338,11 +339,7 @@ def stack_height(stack):
     z += obj["size"]*2
   return z
 
-def build_random_stack(num_objects, args):
-  """
-  create a list of lists of objects
-  """
-
+def initialize_objects(args):
   # Load the property file
   with open(args.properties_json, 'r') as f:
     properties = json.load(f)
@@ -351,18 +348,9 @@ def build_random_stack(num_objects, args):
       for name, rgb in properties['colors'].items()
     }
 
-  # compute the stack positions
-  stacks  = [[]]
-  stack_x = [0]
-  for i in range(args.max_stacks-1):
-    stacks.append([])
-    stack_x.append(stack_x[-1]+random.uniform(args.min_margin, args.max_margin))
-  center  = stack_x[-1] / 2
-  stack_x = [ x - center for x in stack_x ]
-
   # adding objects
   objects         = []
-  for i in range(num_objects):
+  for i in range(args.num_objects):
     
     shape_name, shape_path = random_dict(properties['shapes'])
     _, rgba                = random_dict(color_name_to_rgba)
@@ -373,34 +361,84 @@ def build_random_stack(num_objects, args):
     if shape_name == 'cube':
       r /= math.sqrt(2)
 
-    # Choose x and z
-    stackable = [ i for i, stack in enumerate(stacks) if \
-                  ((not stack) or stack[-1]["stackable"]) ]
-    if not stackable:
-      print("!!!!!! retry stacking !!!!!!")
-      # If we can place no more objects, start over.
-      return build_random_stack(num_objects, args)
-      
-    stack_i   = random.choice(stackable)
-    stack     = stacks[stack_i]
-    
-    x = stack_x[stack_i] + random.uniform(0,args.object_jitter)
-    z = stack_height(stack) + r
-    y = random.uniform(0,args.object_jitter)
-
     obj = {
       'shape': shape_path,
       'size': r,
       'stackable': properties['stackable'][shape_name] == 1,
       'material': material_path,
-      'location':(x,0,z),
       'rotation': rotation,
       'color':rgba,
     }
     objects.append(obj)
-    stack.append(obj)
 
-  return objects, stack_x, stacks
+  return objects
+
+def initialize_stack_x(args):
+  # compute the stack positions
+  stack_x = [0]
+  for i in range(args.max_stacks-1):
+    stack_x.append(stack_x[-1]+random.uniform(args.min_margin, args.max_margin))
+  center  = stack_x[-1] / 2
+  stack_x = [ x - center for x in stack_x ]
+  return stack_x
+
+def initialize_stacks(stack_x):
+  stacks = []
+  for _ in stack_x:
+    stacks.append([])
+  return stacks
+
+def update_locations(stacks, stack_x):
+  for stack, x_base in zip(stacks, stack_x):
+    tmp_stack = []
+    for obj in stack:
+      x = x_base + random.uniform(0,args.object_jitter)
+      y = random.uniform(0,args.object_jitter)
+      z = stack_height(tmp_stack) + obj["size"]
+      obj["location"] = (x,y,z)
+      tmp_stack.append(obj)
+    
+def collect_objects(stacks):
+  objects = []
+  for stack in stacks:
+    objects.extend(stack)
+  return objects
+
+def build_random_stack(objects, stack_x):
+  import copy
+  objects = copy.deepcopy(objects)
+  random.shuffle(objects)
+
+  stacks = initialize_stacks(stack_x)
+  
+  for obj in objects:
+    # Choose x and z
+    stackable = [ stack for stack in stacks if \
+                  ((not stack) or stack[-1]["stackable"]) ]
+    if not stackable:
+      print("!!!!!! retry stacking !!!!!!")
+      # If we can place no more objects, start over.
+      return build_random_stack(objects, stack_x)
+      
+    random.choice(stackable).append(obj)
+
+  update_locations(stacks,stack_x)
+  return objects, stacks
+
+def build_successor_stack(stacks, stack_x):
+  import copy
+  stacks = copy.deepcopy(stacks)
+  
+  nonempty_stacks  = [stack for stack in stacks if stack]
+  stack_from       = random.choice(nonempty_stacks)
+  different_stacks = [stack for stack in stacks if stack != stack_from]
+  stack_to         = random.choice(different_stacks)
+  
+  obj = stack_from.pop()
+  stack_to.append(obj)
+  update_locations(stacks,stack_x)
+
+  return collect_objects(stacks)
 
 def add_objects(scene_struct, camera, objects):
   """
@@ -419,27 +457,6 @@ def add_objects(scene_struct, camera, objects):
     blender_objects.append(bobj)
     utils.add_material(obj["material"], Color=obj["color"])
   return blender_objects
-
-def build_successor_stack(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
-  nonempty_stacks  = [stack for stack in stacks if stack]
-  stack_from       = random.choice(nonempty_stacks)
-  different_stacks = [stack for stack in stacks if stack != stack_from]
-  stack_to         = random.choice(different_stacks)
-  
-  obj = stack_from.pop()
-  newloc = (stack_x[stacks.index(stack_to)], 0, stack_height(stack_to)+obj["size"])
-  print(obj["location"], "->", newloc)
-  obj["location"] = newloc
-  stack_to.append(obj)
-
-  objects = []
-  for stack in stacks:
-    objects.extend(stack)
-  return objects, stack_x, stacks
-
 
 def compute_all_relationships(scene_struct, eps=0.2):
   """
