@@ -8,3 +8,6 @@ blender --background --python render_images.py -- \
         --num-objects 10 \
         --max-stacks 6
 
+
+./extract_region.py output/scenes/CLEVR_new_000000_pre.json
+./extract_region.py output/scenes/CLEVR_new_000000_suc.json
