@@ -459,24 +459,17 @@ def action_move(stacks, stack_x):
   
   return collect_objects(stacks)
 
-def action_polish(stacks, stack_x):
+def action_change_material(stacks, stack_x):
   import copy
   stacks = copy.deepcopy(stacks)
   
-  target_stacks  = [stack for stack in stacks if stack and stack[-1]["material"]=="Rubber"]
+  target_stacks  = [stack for stack in stacks if stack]
   if target_stacks:
     stack                 = random.choice(target_stacks)
-    stack[-1]["material"] = "MyMetal"
-    return collect_objects(stacks)
-
-def action_sand(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
-  target_stacks  = [stack for stack in stacks if stack and stack[-1]["material"]=="MyMetal"]
-  if target_stacks:
-    stack                 = random.choice(target_stacks)
-    stack[-1]["material"] = "Rubber"
+    material = stack[-1]["material"]
+    tmp = list(properties['materials'].values())
+    tmp.remove(material)
+    stack[-1]["material"] = random.choice(tmp)
     return collect_objects(stacks)
 
 def action_remove(stacks, stack_x):
@@ -491,8 +484,7 @@ def action_remove(stacks, stack_x):
 
 actions = [
   action_move,
-  action_polish,
-  action_sand,
+  action_change_material,
   # action_remove
 ]
 
