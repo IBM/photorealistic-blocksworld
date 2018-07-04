@@ -440,7 +440,7 @@ def build_random_stack(objects, stack_x):
   update_locations(stacks,stack_x)
   return objects, stacks
 
-def build_successor_stack(stacks, stack_x):
+def action_move(stacks, stack_x):
   import copy
   stacks = copy.deepcopy(stacks)
   
@@ -452,8 +452,54 @@ def build_successor_stack(stacks, stack_x):
   obj = stack_from.pop()
   stack_to.append(obj)
   update_locations(stacks,stack_x)
-
+  
   return collect_objects(stacks)
+
+def action_polish(stacks, stack_x):
+  import copy
+  stacks = copy.deepcopy(stacks)
+  
+  target_stacks  = [stack for stack in stacks if stack and stack[-1]["material"]=="Rubber"]
+  if target_stacks:
+    stack                 = random.choice(target_stacks)
+    stack[-1]["material"] = "MyMetal"
+    return collect_objects(stacks)
+
+def action_sand(stacks, stack_x):
+  import copy
+  stacks = copy.deepcopy(stacks)
+  
+  target_stacks  = [stack for stack in stacks if stack and stack[-1]["material"]=="MyMetal"]
+  if target_stacks:
+    stack                 = random.choice(target_stacks)
+    stack[-1]["material"] = "Rubber"
+    return collect_objects(stacks)
+
+def action_remove(stacks, stack_x):
+  import copy
+  stacks = copy.deepcopy(stacks)
+  
+  target_stacks  = [stack for stack in stacks if stack]
+  if target_stacks:
+    stack            = random.choice(target_stacks)
+    stack.pop()
+    return collect_objects(stacks)
+
+actions = [
+  action_move,
+  # action_polish,
+  # action_sand,
+  # action_remove
+]
+
+def build_successor_stack(stacks, stack_x):
+  action = random.choice(actions)
+  result = action(stacks, stack_x)
+  if result:
+    return result
+  else:
+    # recursion
+    return build_successor_stack(stacks, stack_x)
 
 def add_objects(scene_struct, camera, objects):
   """
