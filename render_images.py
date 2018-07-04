@@ -344,7 +344,6 @@ def object_equal(o1, o2):
   return \
     o1["shape"]    == o2["shape"]    and \
     o1["size"]     == o2["size"]     and \
-    o1["material"] == o2["material"] and \
     o1["color"]    == o2["color"]
 
 def initialize_objects(args):
@@ -487,8 +486,8 @@ def action_remove(stacks, stack_x):
 
 actions = [
   action_move,
-  # action_polish,
-  # action_sand,
+  action_polish,
+  action_sand,
   # action_remove
 ]
 
