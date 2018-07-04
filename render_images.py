@@ -456,6 +456,7 @@ def add_objects(scene_struct, camera, objects):
     bobj = bpy.context.object
     blender_objects.append(bobj)
     utils.add_material(obj["material"], Color=obj["color"])
+    obj["pixel_coords"] = utils.get_camera_coords(camera, bobj.location)
   return blender_objects
 
 def compute_all_relationships(scene_struct, eps=0.2):
