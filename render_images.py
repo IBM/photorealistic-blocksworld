@@ -170,13 +170,25 @@ def main(args):
     if args.save_blendfiles == 1:
       blend_path = blend_template % (i + args.start_idx)
     num_objects = args.num_objects
+
+    objects_pre, stack_x, stacks = build_random_stack(num_objects, args)
+    objects_suc,       _, _      = build_successor_stack(stacks, stack_x)
+    
     render_scene(args,
-      num_objects=num_objects,
       output_index=(i + args.start_idx),
       output_split=args.split,
-      output_image=img_path,
+      output_image=img_path+"_pre",
       output_scene=scene_path,
-      output_blendfile=blend_path,
+      output_blendfile=(blend_path and blend_path+"_pre"),
+      objects=objects_pre
+    )
+    render_scene(args,
+      output_index=(i + args.start_idx),
+      output_split=args.split,
+      output_image=img_path+"_suc",
+      output_scene=scene_path,
+      output_blendfile=(blend_path and blend_path+"_suc"),
+      objects=objects_suc
     )
 
   # After rendering all images, combine the JSON files for each scene into a
@@ -200,12 +212,12 @@ def main(args):
 
 
 def render_scene(args,
-    num_objects=5,
     output_index=0,
     output_split='none',
     output_image='render.png',
     output_scene='render_json',
     output_blendfile=None,
+    objects=[],
   ):
 
   # Load the main blendfile
@@ -299,7 +311,6 @@ def render_scene(args,
       bpy.data.objects['Lamp_Fill'].location[i] += rand(args.fill_light_jitter)
 
   # Now make some random objects
-  objects, stack_x, stacks = build_random_stack(num_objects, args)
   blender_objects = add_objects(scene_struct, camera, objects)
 
   # Render the scene and dump the scene data structure
