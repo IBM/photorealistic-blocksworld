@@ -338,6 +338,13 @@ def stack_height(stack):
     z += obj["size"]*2
   return z
 
+def object_equal(o1, o2):
+  return \
+    o1["shape"]    == o2["shape"]    and \
+    o1["size"]     == o2["size"]     and \
+    o1["material"] == o2["material"] and \
+    o1["color"]    == o2["color"]
+
 def initialize_objects(args):
   # Load the property file
   with open(args.properties_json, 'r') as f:
@@ -350,26 +357,33 @@ def initialize_objects(args):
   # adding objects
   objects         = []
   for i in range(args.num_objects):
+    while True:
+      shape_name, shape_path = random_dict(properties['shapes'])
+      _, rgba                = random_dict(color_name_to_rgba)
+      _, r                   = random_dict(properties['sizes'])
+      _, material_path       = random_dict(properties['materials'])
+      rotation               = 360.0 * random.random()
+      # For cube, adjust the size a bit
+      if shape_name == 'cube':
+        r /= math.sqrt(2)
+
+      obj = {
+        'shape': shape_path,
+        'size': r,
+        'stackable': properties['stackable'][shape_name] == 1,
+        'material': material_path,
+        'rotation': rotation,
+        'color':rgba,
+      }
+      ok = True
+      for o2 in objects:
+        if object_equal(obj, o2):
+          ok = False
+          break
+      if ok:
+        break
     
-    shape_name, shape_path = random_dict(properties['shapes'])
-    _, rgba                = random_dict(color_name_to_rgba)
-    _, r                   = random_dict(properties['sizes'])
-    _, material_path       = random_dict(properties['materials'])
-    rotation               = 360.0 * random.random()
-    # For cube, adjust the size a bit
-    if shape_name == 'cube':
-      r /= math.sqrt(2)
-
-    obj = {
-      'shape': shape_path,
-      'size': r,
-      'stackable': properties['stackable'][shape_name] == 1,
-      'material': material_path,
-      'rotation': rotation,
-      'color':rgba,
-    }
     objects.append(obj)
-
   return objects
 
 def initialize_stack_x(args):
