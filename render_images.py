@@ -147,12 +147,10 @@ parser.add_argument('--render-tile-size', default=256, type=int,
 def main(args):
   num_digits = 6
   prefix = '%s_%s_' % (args.filename_prefix, args.split)
-  img_template = '%s%%0%dd.png' % (prefix, num_digits)
-  scene_template = '%s%%0%dd.json' % (prefix, num_digits)
-  blend_template = '%s%%0%dd.blend' % (prefix, num_digits)
-  img_template = os.path.join(args.output_image_dir, img_template)
-  scene_template = os.path.join(args.output_scene_dir, scene_template)
-  blend_template = os.path.join(args.output_blend_dir, blend_template)
+  template = '%s%%0%dd' % (prefix, num_digits)
+  img_template = os.path.join(args.output_image_dir, template)
+  scene_template = os.path.join(args.output_scene_dir, template)
+  blend_template = os.path.join(args.output_blend_dir, template)
 
   if not os.path.isdir(args.output_image_dir):
     os.makedirs(args.output_image_dir)
@@ -169,7 +167,8 @@ def main(args):
   for i in range(args.num_images):
     img_path = img_template % (i + args.start_idx)
     scene_path = scene_template % (i + args.start_idx)
-    all_scene_paths.append(scene_path)
+    all_scene_paths.append(scene_path+"_pre.json")
+    all_scene_paths.append(scene_path+"_suc.json")
     blend_path = None
     if args.save_blendfiles == 1:
       blend_path = blend_template % (i + args.start_idx)
@@ -180,17 +179,17 @@ def main(args):
     render_scene(args,
       output_index=(i + args.start_idx),
       output_split=args.split,
-      output_image=img_path+"_pre",
-      output_scene=scene_path+"_pre",
-      output_blendfile=(blend_path and blend_path+"_pre"),
+      output_image=img_path+"_pre.png",
+      output_scene=scene_path+"_pre.json",
+      output_blendfile=(blend_path and blend_path+"_pre.blend"),
       objects=objects_pre
     )
     render_scene(args,
       output_index=(i + args.start_idx),
       output_split=args.split,
-      output_image=img_path+"_suc",
-      output_scene=scene_path+"_suc",
-      output_blendfile=(blend_path and blend_path+"_suc"),
+      output_image=img_path+"_suc.png",
+      output_scene=scene_path+"_suc.json",
+      output_blendfile=(blend_path and blend_path+"_suc.blend"),
       objects=objects_suc
     )
 
