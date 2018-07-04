@@ -3,11 +3,11 @@
 blender -noaudio \
         --background --python render_images.py -- \
         --num-images 1 \
-        --render-num-samples 100 \
+        --render-num-samples 200 \
         --width 600 \
         --height 400 \
         --num-objects 10 \
-        --max-stacks 6
+        --max-stacks 5
 
 
 ./extract_region.py output/scenes/CLEVR_new_000000_pre.json
