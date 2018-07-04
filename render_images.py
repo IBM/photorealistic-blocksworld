@@ -72,7 +72,7 @@ parser.add_argument('--max-stacks', default=4, type=int,
                     help="the maximum number of stacks.")
 
 parser.add_argument('--object-jitter', default=0.2, type=int,
-                    help="the maximum number of stacks.")
+                    help="The magnitude of random jitter to add to the x,y position of each block.")
 
 # Output settings
 parser.add_argument('--start-idx', default=0, type=int,
