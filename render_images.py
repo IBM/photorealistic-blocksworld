@@ -321,6 +321,12 @@ def render_scene(args,
 def random_dict(dict):
   return random.choice(list(dict.items()))
 
+def stack_height(stack):
+  z = 0
+  for obj in stack:
+    z += obj["size"]*2
+  return z
+
 def build_random_stack(num_objects, args):
   """
   create a list of lists of objects
@@ -368,10 +374,7 @@ def build_random_stack(num_objects, args):
     stack     = stacks[stack_i]
     
     x = stack_x[stack_i] + random.uniform(0,args.object_jitter)
-    z = r
-    if stack:
-      for obj in stack:
-        z += obj["size"]*2
+    z = stack_height(stack) + r
     y = random.uniform(0,args.object_jitter)
 
     obj = {
