@@ -409,9 +409,25 @@ def add_objects(scene_struct, camera, objects):
     utils.add_material(obj["material"], Color=obj["color"])
   return blender_objects
 
-def build_successor_stack(stacks):
-  # TBP
-  pass
+def build_successor_stack(stacks, stack_x):
+  import copy
+  stacks = copy.deepcopy(stacks)
+  
+  nonempty_stacks  = [stack for stack in stacks if stack]
+  stack_from       = random.choice(nonempty_stacks)
+  different_stacks = [stack for stack in stacks if stack != stack_from]
+  stack_to         = random.choice(different_stacks)
+  
+  obj = stack_from.pop()
+  newloc = (stack_x[stacks.index(stack_to)], 0, stack_height(stack_to)+obj["size"])
+  print(obj["location"], "->", newloc)
+  obj["location"] = newloc
+  stack_to.append(obj)
+
+  objects = []
+  for stack in stacks:
+    objects.extend(stack)
+  return objects, stack_x, stacks
 
 
 def compute_all_relationships(scene_struct, eps=0.2):
