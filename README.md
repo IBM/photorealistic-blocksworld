@@ -14,3 +14,5 @@ echo $PWD >> ~/.local/lib/python3.5/site-packages/clevr.pth
 Example: `./test.sh`
 
 For the original readme, see [README-clevr.md](README-clevr.md) .
+
+Note: I changed all keyword options from using underscores to using hyphens (e.g. `--use_gpu` -> `--use-gpu`) 
