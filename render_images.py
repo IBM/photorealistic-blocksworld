@@ -181,7 +181,7 @@ def main(args):
       output_index=(i + args.start_idx),
       output_split=args.split,
       output_image=img_path+"_pre",
-      output_scene=scene_path,
+      output_scene=scene_path+"_pre",
       output_blendfile=(blend_path and blend_path+"_pre"),
       objects=objects_pre
     )
@@ -189,7 +189,7 @@ def main(args):
       output_index=(i + args.start_idx),
       output_split=args.split,
       output_image=img_path+"_suc",
-      output_scene=scene_path,
+      output_scene=scene_path+"_suc",
       output_blendfile=(blend_path and blend_path+"_suc"),
       objects=objects_suc
     )
