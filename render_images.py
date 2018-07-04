@@ -456,6 +456,29 @@ def add_objects(scene_struct, camera, objects):
     blender_objects.append(bobj)
     utils.add_material(obj["material"], Color=obj["color"])
     obj["pixel_coords"] = utils.get_camera_coords(camera, bobj.location)
+
+    import numpy as np
+    loc = np.array(bobj.location)
+    dim = np.array(bobj.dimensions)
+    half = dim / 2
+    corners = []
+    corners.append(loc + half * [1,1,1])
+    corners.append(loc + half * [1,1,-1])
+    corners.append(loc + half * [1,-1,1])
+    corners.append(loc + half * [1,-1,-1])
+    corners.append(loc + half * [-1,1,1])
+    corners.append(loc + half * [-1,1,-1])
+    corners.append(loc + half * [-1,-1,1])
+    corners.append(loc + half * [-1,-1,-1])
+
+    import mathutils
+    corners_camera_coords = np.array([ utils.get_camera_coords(camera, mathutils.Vector(tuple(corner)))
+                                       for corner in corners ])
+    xmax = np.amax(corners_camera_coords[:,0])
+    ymax = np.amax(corners_camera_coords[:,1])
+    xmin = np.amin(corners_camera_coords[:,0])
+    ymin = np.amin(corners_camera_coords[:,1])
+    obj["bbox"] = (float(xmin), float(ymin), float(xmax), float(ymax))
   return blender_objects
 
 def compute_all_relationships(scene_struct, eps=0.2):
