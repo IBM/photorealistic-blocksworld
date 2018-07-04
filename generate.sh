@@ -8,7 +8,7 @@ blender -noaudio \
         --height 200 \
         --num-objects 10 \
         --max-stacks 5 \
-        --use_gpu 1
+        --use-gpu 1
 
 parallel ./extract_region.py ::: output/scenes/*.json
 
