@@ -1,6 +1,7 @@
 #!/bin/bash -x
 
-blender --background --python render_images.py -- \
+blender -noaudio \
+        --background --python render_images.py -- \
         --num-images 10 \
         --render-num-samples 40 \
         --width 300 \
