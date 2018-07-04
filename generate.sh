@@ -3,9 +3,9 @@
 blender -noaudio \
         --background --python render_images.py -- \
         --num-images 20000 \
-        --render-num-samples 100 \
-        --width 300 \
-        --height 200 \
+        --render-num-samples 500 \
+        --width 600 \
+        --height 400 \
         --num-objects 10 \
         --max-stacks 5 \
         --use-gpu 1
