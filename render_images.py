@@ -41,6 +41,9 @@ if INSIDE_BLENDER:
     print("$VERSION is your Blender version (such as 2.78).")
     sys.exit(1)
 
+properties         = None
+color_name_to_rgba = None
+
 def initialize_parser():
   parser = argparse.ArgumentParser()
 
@@ -147,6 +150,15 @@ def initialize_parser():
   return parser
 
 def main(args):
+  # Load the property file
+  global properties, color_name_to_rgba
+  with open(args.properties_json, 'r') as f:
+    properties = json.load(f)
+    color_name_to_rgba = {
+      name : [float(c) / 255.0 for c in rgb] + [1.0] \
+      for name, rgb in properties['colors'].items()
+    }
+  
   num_digits = 6
   prefix = '%s_%s_' % (args.filename_prefix, args.split)
   template = '%s%%0%dd' % (prefix, num_digits)
@@ -347,13 +359,6 @@ def object_equal(o1, o2):
     o1["color"]    == o2["color"]
 
 def initialize_objects(args):
-  # Load the property file
-  with open(args.properties_json, 'r') as f:
-    properties = json.load(f)
-    color_name_to_rgba = {
-      name : [float(c) / 255.0 for c in rgb] + [1.0] \
-      for name, rgb in properties['colors'].items()
-    }
 
   # adding objects
   objects         = []
