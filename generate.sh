@@ -10,5 +10,5 @@ blender -noaudio \
         --max-stacks 4 \
         --use-gpu 1
 
-parallel ./extract_region.py ::: output/scenes/*.json
+# parallel ./extract_region.py ::: output/scenes/*.json
 
