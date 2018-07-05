@@ -367,7 +367,6 @@ def initialize_objects(args):
       shape_name, shape_path = random_dict(properties['shapes'])
       _, rgba                = random_dict(color_name_to_rgba)
       _, r                   = random_dict(properties['sizes'])
-      _, material_path       = random_dict(properties['materials'])
       rotation               = 360.0 * random.random()
       # For cube, adjust the size a bit
       if shape_name == 'cube':
@@ -377,7 +376,6 @@ def initialize_objects(args):
         'shape': shape_path,
         'size': r,
         'stackable': properties['stackable'][shape_name] == 1,
-        'material': material_path,
         'rotation': rotation,
         'color':rgba,
       }
@@ -442,6 +440,10 @@ def build_random_stack(objects, stack_x):
     random.choice(stackable).append(obj)
 
   update_locations(stacks,stack_x)
+
+  for obj in objects:
+    obj["material"] = random_dict(properties["materials"])[1]
+  
   return objects, stacks
 
 def action_move(stacks, stack_x):
