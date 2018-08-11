@@ -31,7 +31,9 @@ def main(args):
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
     
     for i,scenefile in enumerate(files):
-        print(i,"/",filenum)
+        if 0==(i%100):
+            print(i,"/",filenum)
+        
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
         
