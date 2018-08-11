@@ -11,16 +11,16 @@ def main(scenefile):
 
     base, nameext = os.path.split(scenefile)
     name, ext     = os.path.splitext(nameext)
-    print(base,nameext,name,ext)
+    # print(base,nameext,name,ext)
     assert(ext==".json")
     
     imagefile_base = os.path.join("{}/../images/{}".format(base,name))
     image = imageio.imread(imagefile_base+".png")
-    print(image.shape)
+    # print(image.shape)
     
     for i, obj in enumerate(scene["objects"]):
         bbox = tuple(obj["bbox"])
-        print(bbox)
+        # print(bbox)
         x1, y1, x2, y2 = bbox
         region = image[int(y1):int(y2), int(x1):int(x2), :]
         imageio.imwrite("{}_{}.png".format(imagefile_base,i),region)
