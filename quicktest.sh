@@ -12,3 +12,5 @@ blender -noaudio \
 
 ./extract_region.py output/scenes/CLEVR_new_000000_pre.json
 ./extract_region.py output/scenes/CLEVR_new_000000_suc.json
+
+./extract_regions_binary.py output
