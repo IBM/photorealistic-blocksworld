@@ -16,3 +16,5 @@ Example: `./test.sh`
 For the original readme, see [README-clevr.md](README-clevr.md) .
 
 Note: I changed all keyword options from using underscores to using hyphens (e.g. `--use_gpu` -> `--use-gpu`) 
+
+to use `extract_region.py`, you also need `imageio`. run `pip3 install --user imageio`
