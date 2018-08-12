@@ -41,7 +41,7 @@ def main(args):
         assert(ext==".json")
     
         imagefile = os.path.join(directory,"images",name+".png")
-        image = imageio.imread(imagefile)
+        image = imageio.imread(imagefile)[:,:,:3]
         
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
