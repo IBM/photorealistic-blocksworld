@@ -47,7 +47,7 @@ def main(args):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
-            images[i,j] = skimage.transform.resize(region,(resized,resized,3))
+            images[i,j] = skimage.transform.resize(region,(resized,resized,3),preserve_range=True)
             bboxes[i,j] = bbox
 
     if compress:
