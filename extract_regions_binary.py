@@ -48,7 +48,7 @@ def main(args):
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             images[i,j] = skimage.transform.resize(region,(resized,resized,3),preserve_range=True)
-            bboxes[i,j] = bbox
+            bboxes[i,j] = (np.array(bbox)/5).round()
 
     if compress:
         np.savez_compressed(out,images=images,bboxes=bboxes)
