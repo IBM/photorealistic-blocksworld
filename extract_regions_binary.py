@@ -29,6 +29,8 @@ def main(args):
 
     images = np.zeros((filenum, maxobj, resized, resized, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
+
+    picsize = None
     
     for i,scenefile in enumerate(files):
         if 0==(i%100):
@@ -42,6 +44,8 @@ def main(args):
     
         imagefile = os.path.join(directory,"images",name+".png")
         image = imageio.imread(imagefile)[:,:,:3]
+        if picsize is None:
+            picsize = (np.array(image.shape)/5).round()
         
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
@@ -51,9 +55,9 @@ def main(args):
             bboxes[i,j] = (np.array(bbox)/5).round()
 
     if compress:
-        np.savez_compressed(out,images=images,bboxes=bboxes)
+        np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize)
     else:
-        np.savez(out,images=images,bboxes=bboxes)
+        np.savez(out,images=images,bboxes=bboxes,picsize=picsize)
 
 if __name__ == '__main__':
     import sys
