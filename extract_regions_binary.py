@@ -45,14 +45,14 @@ def main(args):
         imagefile = os.path.join(directory,"images",name+".png")
         image = imageio.imread(imagefile)[:,:,:3]
         if picsize is None:
-            picsize = (np.array(image.shape)/5).round()
+            picsize = image.shape
         
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             images[i,j] = skimage.transform.resize(region,(resized,resized,3),preserve_range=True)
-            bboxes[i,j] = (np.array(bbox)/5).round()
+            bboxes[i,j] = bbox
 
     if compress:
         np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize)
