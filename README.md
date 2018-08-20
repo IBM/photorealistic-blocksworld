@@ -18,3 +18,7 @@ For the original readme, see [README-clevr.md](README-clevr.md) .
 Note: I changed all keyword options from using underscores to using hyphens (e.g. `--use_gpu` -> `--use-gpu`) 
 
 to use `extract_region.py`, you also need `imageio`. run `pip3 install --user imageio`
+
+Example for extract_regions_binary.py:
+
+./extract_regions_binary.py --maxobj 7 --out blocksworld.npz clevr_blocksworld
