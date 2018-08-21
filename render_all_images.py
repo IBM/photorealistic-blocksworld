@@ -178,8 +178,10 @@ def main(args):
   all_scene_paths = []
   i = -1
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
+    print("hi!")
     for objects_suc in enumerate_successor_stack(stacks, stack_x):
       i+=1
+      print(i)
       img_path = img_template % (i + args.start_idx)
       scene_path = scene_template % (i + args.start_idx)
       all_scene_paths.append(scene_path+"_pre.json")
@@ -426,22 +428,25 @@ def enumerate_stack(objects, stack_x):
   l = len(stacks)
   
   def rec(objects):
-    if objects:
+    print(objects)
+    if len(objects)>0:
       obj = objects[0]
       for i in range(l):
+        print(i)
         stacks[i].append(obj)
         for m in properties["materials"].values():
           obj["material"] = m
-          rec(objects[1:])
+          print(m)
+          yield from rec(objects[1:])
           del obj["material"]
         stacks[i].pop()
     else:
       update_locations(stacks,stack_x)
       yield objects, stacks
   
-  rec()
+  yield from rec(objects)
 
-def enumerate_action_move(stacks, stack_x):
+def action_move(stacks, stack_x):
   import copy
   
   nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
@@ -486,7 +491,7 @@ actions = [
 
 def enumerate_successor_stack(stacks, stack_x):
   for action in actions:
-    action(stacks, stack_x)
+    yield from action(stacks, stack_x)
 
 def add_objects(scene_struct, camera, objects):
   """
