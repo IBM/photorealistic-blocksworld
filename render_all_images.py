@@ -174,14 +174,15 @@ def main(args):
   # set up objects (except locations)
   objects = initialize_objects(args)
   stack_x = initialize_stack_x(args)
+  print(objects,stack_x)
   
   all_scene_paths = []
   i = -1
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
-    print("hi!")
     for objects_suc in enumerate_successor_stack(stacks, stack_x):
       i+=1
-      print(i)
+      print("pre",objects_pre)
+      print("suc",objects_suc)
       img_path = img_template % (i + args.start_idx)
       scene_path = scene_template % (i + args.start_idx)
       all_scene_paths.append(scene_path+"_pre.json")
@@ -427,17 +428,14 @@ def enumerate_stack(objects, stack_x):
   stacks = initialize_stacks(stack_x)
   l = len(stacks)
   
-  def rec(objects):
-    print(objects)
-    if len(objects)>0:
-      obj = objects[0]
+  def rec(_objs):
+    if len(_objs)>0:
+      obj = _objs[0]
       for i in range(l):
-        print(i)
         stacks[i].append(obj)
         for m in properties["materials"].values():
           obj["material"] = m
-          print(m)
-          yield from rec(objects[1:])
+          yield from rec(_objs[1:])
           del obj["material"]
         stacks[i].pop()
     else:
@@ -447,31 +445,28 @@ def enumerate_stack(objects, stack_x):
   yield from rec(objects)
 
 def action_move(stacks, stack_x):
-  import copy
-  
   nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
   for i in nonempty_stacks:
     different_stacks = [j for j,stack in enumerate(stacks) if j != i]
     for j in different_stacks:
-      new_stacks = copy.deepcopy(stacks)
-      obj = new_stacks[i].pop()
-      new_stacks[j].append(obj)
-      update_locations(new_stacks,stack_x)
-      yield collect_objects(new_stacks)
-
+      obj = stacks[i].pop()
+      stacks[j].append(obj)
+      update_locations(stacks,stack_x)
+      yield collect_objects(stacks)
+      stacks[j].pop()
+      stacks[i].append(obj)
+      update_locations(stacks,stack_x)
+      
 def action_change_material(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
   nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
   for i in nonempty_stacks:
     material = stacks[i][-1]["material"]
     tmp = list(properties['materials'].values())
     tmp.remove(material)
-    new_stacks = copy.deepcopy(stacks)
     for new_material in tmp:
-      new_stacks[i][-1]["material"] = new_material
-      yield collect_objects(new_stacks)
+      stacks[i][-1]["material"] = new_material
+      yield collect_objects(stacks)
+    stacks[i][-1]["material"] = material
 
 def action_remove(stacks, stack_x):
   import copy
@@ -490,7 +485,10 @@ actions = [
 ]
 
 def enumerate_successor_stack(stacks, stack_x):
+  import copy
+  stacks = copy.deepcopy(stacks)
   for action in actions:
+    print("selected action:",action)
     yield from action(stacks, stack_x)
 
 def add_objects(scene_struct, camera, objects):
