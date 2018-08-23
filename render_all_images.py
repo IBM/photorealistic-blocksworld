@@ -249,6 +249,13 @@ def main(args):
       print(scene_hashkey(objects_suc))
       i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
 
+      i_pre = os.path.basename(i_pre)
+      s_pre = os.path.basename(s_pre)
+      b_pre = os.path.basename(b_pre)
+      i_suc = os.path.basename(i_suc)
+      s_suc = os.path.basename(s_suc)
+      b_suc = os.path.basename(b_suc)
+      
       i_pre2 = img_template % transitions +"_pre.png"
       s_pre2 = scene_template % transitions+"_pre.json"
       b_pre2 = blend_template % transitions+"_pre"
