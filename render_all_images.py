@@ -218,7 +218,7 @@ def main(args):
     # print(key)
     
     states +=1
-    if 0 == (states%1000):
+    if 0 == (states%10000):
       print(states)
     if args.dry_run:
       continue
