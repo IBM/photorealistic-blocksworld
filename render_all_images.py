@@ -220,12 +220,12 @@ def main(args):
     states +=1
     if 0 == (states%1000):
       print(states)
+    if args.dry_run:
+      continue
     img_path = img_template % (states + args.start_idx) +".png"
     scene_path = scene_template % (states + args.start_idx)+".json"
     blend_path = blend_template % (states + args.start_idx)
     hashtable[key] = (img_path, scene_path, blend_path)
-    if args.dry_run:
-      continue
 
     render_scene(args,
                  output_index=(states + args.start_idx),
@@ -243,6 +243,9 @@ def main(args):
       if 0 == (transitions%10000):
         print(transitions)
 
+      if args.dry_run:
+        continue
+      
       # should be deterministic
       # print(scene_hashkey(objects_pre))
       i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
