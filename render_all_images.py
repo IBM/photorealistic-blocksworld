@@ -266,12 +266,12 @@ def main(args):
   transitions = 0
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
     states +=1
-    if not (args.start_idx <= states < args.start_idx + args.num_images ):
-      continue
     for objects_suc in enumerate_successor_stack(stacks, stack_x):
       transitions+=1
       if 0 == (transitions%10000):
         print(transitions)
+      if not (args.start_idx <= states < args.start_idx + args.num_images ):
+        continue
 
       if args.dry_run:
         continue
