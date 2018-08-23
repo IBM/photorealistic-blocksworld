@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-common="-mem 4g -queue x86_1h -proj $(date -Iminutes)"
+common="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $(date -Iminutes)"
 # dir=$(dirname $(dirname $(readlink -ef $0)))
 # export PYTHONPATH=$dir:$PYTHONPATH
 # export PYTHONUNBUFFERED=1
