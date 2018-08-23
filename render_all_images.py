@@ -415,24 +415,28 @@ def collect_objects(stacks):
 def enumerate_stack(objects, stack_x):
   import copy
   objects = copy.deepcopy(objects)
+  objects_tmp = [ o for o in objects ] # not the deep copy
   stacks = initialize_stacks(stack_x)
-  l = len(stacks)
+  sl = len(stacks)
   
   def rec(_objs):
-    if len(_objs)>0:
-      obj = _objs[0]
-      for i in range(l):
-        stacks[i].append(obj)
-        for m in properties["materials"].values():
-          obj["material"] = m
-          yield from rec(_objs[1:])
-          del obj["material"]
-        stacks[i].pop()
+    ol = len(_objs)
+    if ol>0:
+      for o in range(ol):
+        obj = _objs.pop(o)
+        for s in range(sl):
+          stacks[s].append(obj)
+          for m in properties["materials"].values():
+            obj["material"] = m
+            yield from rec(_objs)
+            del obj["material"]
+          stacks[s].pop()
+        _objs.insert(o,obj)
     else:
       update_locations(stacks,stack_x)
       yield objects, stacks
   
-  yield from rec(objects)
+  yield from rec(objects_tmp)
 
 def action_move(stacks, stack_x):
   nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
