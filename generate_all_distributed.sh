@@ -21,6 +21,7 @@ NPROC=$1
 blender -noaudio \
         --background --python render_all_images.py -- \
         --render-num-samples 200 \
+        --initial-objects init-4-4.json \
         --output-dir output-4-4 \
         --start-idx $((($NPROC-1)*1000)) \
         --num-images 1000 \

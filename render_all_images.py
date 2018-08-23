@@ -77,6 +77,10 @@ def initialize_parser():
   
   parser.add_argument('--object-jitter', default=0.2, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
+  parser.add_argument('--initial-objects', default=None,
+                      help="The path for dumping the initial set of objects and stack positions."+
+                      "When specified but the file does not exist, create a new set of objects and dump a json to the file then terminate immediately."+
+                      "When specified and the file exists, it reads the json file and proceeds.")
   
   # Output settings
   parser.add_argument('--start-idx', default=0, type=int,
@@ -213,6 +217,18 @@ def main(args):
   # set up objects (except locations)
   objects = initialize_objects(args)
   stack_x = initialize_stack_x(args)
+  if args.initial_objects:
+    if os.path.isfile(args.initial_objects):
+      with open(args.initial_objects, 'r') as f:
+        init = json.load(f)
+        objects = init["objects"]
+        stack_x = init["stack_x"]
+    else:
+      with open(args.initial_objects, 'w') as f:
+        init = {"objects":objects, "stack_x":stack_x}
+        json.dump(init, f, indent=4)
+        return
+
   print(objects,stack_x)
   
   states = 0
