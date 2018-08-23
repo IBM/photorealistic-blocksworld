@@ -22,7 +22,7 @@ blender -noaudio \
         --background --python render_all_images.py -- \
         --render-num-samples 200 \
         --output-dir output-4-4 \
-        --start-idx $(($NPROC*1000)) \
+        --start-idx $((($NPROC-1)*1000)) \
         --num-images 1000 \
         --width 150 \
         --height 100 \
