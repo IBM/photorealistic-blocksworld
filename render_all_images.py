@@ -145,6 +145,8 @@ def initialize_parser():
                       "quality of the rendered image but may affect the speed; CPU-based " +
                       "rendering may achieve better performance using smaller tile sizes " +
                       "while larger tile sizes may be optimal for GPU-based rendering.")
+  parser.add_argument('--dry-run', default=False, action='store_true',
+                      help="Do not render images and count the number of possible states and transitions.")
   return parser
 
 def main(args):
@@ -178,9 +180,15 @@ def main(args):
   
   all_scene_paths = []
   i = -1
+  j = -1
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
+    j+=1
     for objects_suc in enumerate_successor_stack(stacks, stack_x):
       i+=1
+      if 0 == (i%10000):
+        print(i)
+      if args.dry_run:
+        continue
       print("pre",objects_pre)
       print("suc",objects_suc)
       img_path = img_template % (i + args.start_idx)
@@ -207,7 +215,11 @@ def main(args):
                    output_blendfile=(blend_path and blend_path+"_suc.blend"),
                    objects=objects_suc
       )
-
+  
+  print(i,"transitions")
+  print(j,"states")
+  if args.dry_run:
+    return
   # After rendering all images, combine the JSON files for each scene into a
   # single JSON file.
   all_scenes = []
@@ -488,7 +500,7 @@ def enumerate_successor_stack(stacks, stack_x):
   import copy
   stacks = copy.deepcopy(stacks)
   for action in actions:
-    print("selected action:",action)
+    # print("selected action:",action)
     yield from action(stacks, stack_x)
 
 def add_objects(scene_struct, camera, objects):
