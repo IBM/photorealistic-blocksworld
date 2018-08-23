@@ -83,6 +83,9 @@ def initialize_parser():
                       help="The index at which to start for numbering rendered images. Setting " +
                       "this to non-zero values allows you to distribute rendering across " +
                       "multiple machines and recombine the results later.")
+  parser.add_argument('--num-images', default=float('inf'), type=float,
+                      help="The number of images to render")
+  
   parser.add_argument('--filename-prefix', default='CLEVR',
                       help="This prefix will be prepended to the rendered images and JSON scenes")
   parser.add_argument('--split', default='new',
@@ -225,6 +228,10 @@ def main(args):
       print(states)
     if args.dry_run:
       continue
+
+    if not (args.start_idx <= states < args.start_idx + args.num_images ):
+      continue
+    
     img_path = img_template % (states + args.start_idx) +".png"
     scene_path = scene_template % (states + args.start_idx)+".json"
     blend_path = blend_template % (states + args.start_idx)
