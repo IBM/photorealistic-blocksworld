@@ -215,7 +215,7 @@ def main(args):
     key = scene_hashkey(objects)
     if key in hashtable:
       continue
-    print(key)
+    # print(key)
     
     states +=1
     if 0 == (states%1000):
@@ -244,9 +244,9 @@ def main(args):
         print(transitions)
 
       # should be deterministic
-      print(scene_hashkey(objects_pre))
+      # print(scene_hashkey(objects_pre))
       i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
-      print(scene_hashkey(objects_suc))
+      # print(scene_hashkey(objects_suc))
       i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
 
       i_pre = os.path.basename(i_pre)
