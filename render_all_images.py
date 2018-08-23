@@ -237,7 +237,6 @@ def main(args):
     key = scene_hashkey(objects)
     if key in hashtable:
       continue
-    # print(key)
     
     states +=1
     if 0 == (states%10000):
