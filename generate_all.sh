@@ -17,7 +17,6 @@
 blender -noaudio \
         --background --python render_all_images.py -- \
         --render-num-samples 200 \
-        --num-images 1000 \
         --width 150 \
         --height 100 \
         --num-objects 4 \
