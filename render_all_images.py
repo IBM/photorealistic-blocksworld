@@ -229,14 +229,14 @@ def main(args):
     if args.dry_run:
       continue
 
-    if not (args.start_idx <= states < args.start_idx + args.num_images ):
-      continue
-    
     img_path = img_template % (states + args.start_idx) +".png"
     scene_path = scene_template % (states + args.start_idx)+".json"
     blend_path = blend_template % (states + args.start_idx)
     hashtable[key] = (img_path, scene_path, blend_path)
 
+    if not (args.start_idx <= states < args.start_idx + args.num_images ):
+      continue
+    
     render_scene(args,
                  output_index=(states + args.start_idx),
                  output_split=args.split,
