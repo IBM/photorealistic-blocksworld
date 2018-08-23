@@ -22,7 +22,7 @@ blender -noaudio \
         --background --python render_all_images.py -- \
         --render-num-samples 200 \
         --initial-objects init-4-4.json \
-        --output-dir output-4-4 \
+        --output-dir output-4-4-distributed \
         --start-idx $((($NPROC-1)*200)) \
         --num-images 200 \
         --width 150 \
