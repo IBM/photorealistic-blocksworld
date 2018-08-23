@@ -178,7 +178,6 @@ def main(args):
   stack_x = initialize_stack_x(args)
   print(objects,stack_x)
   
-  all_scene_paths = []
   i = -1
   j = -1
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
@@ -193,8 +192,6 @@ def main(args):
       print("suc",objects_suc)
       img_path = img_template % (i + args.start_idx)
       scene_path = scene_template % (i + args.start_idx)
-      all_scene_paths.append(scene_path+"_pre.json")
-      all_scene_paths.append(scene_path+"_suc.json")
       blend_path = None
       if args.save_blendfiles == 1:
         blend_path = blend_template % (i + args.start_idx)
@@ -218,25 +215,6 @@ def main(args):
   
   print(i,"transitions")
   print(j,"states")
-  if args.dry_run:
-    return
-  # After rendering all images, combine the JSON files for each scene into a
-  # single JSON file.
-  all_scenes = []
-  for scene_path in all_scene_paths:
-    with open(scene_path, 'r') as f:
-      all_scenes.append(json.load(f))
-  output = {
-    'info': {
-      'date': args.date,
-      'version': args.version,
-      'split': args.split,
-      'license': args.license,
-    },
-    'scenes': all_scenes
-  }
-  with open(args.output_scene_file, 'w') as f:
-    json.dump(output, f)
 
 def render_scene(args,
     output_index=0,
