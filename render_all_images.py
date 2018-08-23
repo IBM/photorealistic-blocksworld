@@ -231,7 +231,7 @@ def main(args):
 
   print(objects,stack_x)
   
-  states = 0
+  states = -1
   hashtable = dict()
   for objects, stacks in enumerate_stack(objects, stack_x):
     key = scene_hashkey(objects)
@@ -262,8 +262,8 @@ def main(args):
                  objects=objects)
   print(states,"states")
   
-  states = 0
-  transitions = 0
+  states = -1
+  transitions = -1
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
     states +=1
     for objects_suc in enumerate_successor_stack(stacks, stack_x):
