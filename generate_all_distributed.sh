@@ -23,8 +23,8 @@ blender -noaudio \
         --render-num-samples 200 \
         --initial-objects init-4-4.json \
         --output-dir output-4-4 \
-        --start-idx $((($NPROC-1)*1000)) \
-        --num-images 1000 \
+        --start-idx $((($NPROC-1)*200)) \
+        --num-images 200 \
         --width 150 \
         --height 100 \
         --num-objects 4 \

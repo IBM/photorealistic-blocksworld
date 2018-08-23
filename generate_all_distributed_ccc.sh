@@ -6,5 +6,5 @@ common="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $(date -Iminutes)"
 # export PYTHONPATH=$dir:$PYTHONPATH
 # export PYTHONUNBUFFERED=1
 
-parallel "$common ./generate_all_distributed.sh {}" ::: $(seq 100)
+parallel "$common ./generate_all_distributed.sh {}" ::: $(seq 500)
 
