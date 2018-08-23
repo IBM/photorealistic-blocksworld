@@ -264,8 +264,13 @@ def main(args):
   
   states = -1
   transitions = -1
+  hashset = set()
   for objects_pre, stacks in enumerate_stack(objects, stack_x):
+    key = scene_hashkey(objects_pre)
+    if key in hashset:
+      continue
     states +=1
+    hashset.add(key)
     for objects_suc in enumerate_successor_stack(stacks, stack_x):
       transitions+=1
       if 0 == (transitions%10000):
