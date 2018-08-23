@@ -149,6 +149,37 @@ def initialize_parser():
                       help="Do not render images and count the number of possible states and transitions.")
   return parser
 
+def scene_hashkey(objects):
+    # Example objects
+    # [{'shape': 'SmoothCube_v2',
+    #   'location': (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
+    #       'bbox': (94.0, 143.0, 108.0, 159.0),
+    #       'color': [0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0],
+    #       'pixel_coords': (101, 151, 16.81483268737793),
+    #       'material': 'MyMetal',
+    #       'size': 0.31819805153394637,
+    #       'stackable': True,
+    #       'rotation': 122.37145376299921},
+    #       ...
+    # ]
+    key = tuple(
+      sorted([
+        (o['shape'],
+         o['location'],
+         tuple(o['color']),
+         o['size'],
+         o['material'],)
+        for o in objects]))
+    
+    # key = (('SmoothCube_v2',
+    #   (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
+    #   (94.0, 143.0, 108.0, 159.0),
+    #   (0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0),
+    #   'MyMetal',
+    #   0.31819805153394637),...
+    # )
+    return key
+  
 def main(args):
   # Load the property file
   global properties, color_name_to_rgba
@@ -178,43 +209,63 @@ def main(args):
   stack_x = initialize_stack_x(args)
   print(objects,stack_x)
   
-  i = -1
-  j = -1
-  for objects_pre, stacks in enumerate_stack(objects, stack_x):
-    j+=1
-    for objects_suc in enumerate_successor_stack(stacks, stack_x):
-      i+=1
-      if 0 == (i%10000):
-        print(i)
-      if args.dry_run:
-        continue
-      print("pre",objects_pre)
-      print("suc",objects_suc)
-      img_path = img_template % (i + args.start_idx)
-      scene_path = scene_template % (i + args.start_idx)
-      blend_path = None
-      if args.save_blendfiles == 1:
-        blend_path = blend_template % (i + args.start_idx)
+  states = 0
+  hashtable = dict()
+  for objects, stacks in enumerate_stack(objects, stack_x):
+    key = scene_hashkey(objects)
+    if key in hashtable:
+      continue
+    print(key)
+    
+    states +=1
+    if 0 == (states%1000):
+      print(states)
+    img_path = img_template % (states + args.start_idx) +".png"
+    scene_path = scene_template % (states + args.start_idx)+".json"
+    blend_path = blend_template % (states + args.start_idx)
+    hashtable[key] = (img_path, scene_path, blend_path)
+    if args.dry_run:
+      continue
 
-      render_scene(args,
-                   output_index=(i + args.start_idx),
-                   output_split=args.split,
-                   output_image=img_path+"_pre.png",
-                   output_scene=scene_path+"_pre.json",
-                   output_blendfile=(blend_path and blend_path+"_pre.blend"),
-                   objects=objects_pre
-      )
-      render_scene(args,
-                   output_index=(i + args.start_idx),
-                   output_split=args.split,
-                   output_image=img_path+"_suc.png",
-                   output_scene=scene_path+"_suc.json",
-                   output_blendfile=(blend_path and blend_path+"_suc.blend"),
-                   objects=objects_suc
-      )
+    render_scene(args,
+                 output_index=(states + args.start_idx),
+                 output_split=args.split,
+                 output_image=img_path,
+                 output_scene=scene_path,
+                 # output_blendfile=blend_path,
+                 objects=objects)
+  print(states,"states")
   
-  print(i,"transitions")
-  print(j,"states")
+  transitions = 0
+  for objects_pre, stacks in enumerate_stack(objects, stack_x):
+    for objects_suc in enumerate_successor_stack(stacks, stack_x):
+      transitions+=1
+      if 0 == (transitions%10000):
+        print(transitions)
+
+      # should be deterministic
+      print(scene_hashkey(objects_pre))
+      i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
+      print(scene_hashkey(objects_suc))
+      i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
+
+      i_pre2 = img_template % transitions +"_pre.png"
+      s_pre2 = scene_template % transitions+"_pre.json"
+      b_pre2 = blend_template % transitions+"_pre"
+      i_suc2 = img_template % transitions +"_suc.png"
+      s_suc2 = scene_template % transitions+"_suc.json"
+      b_suc2 = blend_template % transitions+"_suc"
+      
+      # link
+      import subprocess
+      subprocess.run(["ln", "-s", i_pre, i_pre2])
+      subprocess.run(["ln", "-s", s_pre, s_pre2])
+      # subprocess.run(["ln", "-s", b_pre, b_pre2])
+      subprocess.run(["ln", "-s", i_suc, i_suc2])
+      subprocess.run(["ln", "-s", s_suc, s_suc2])
+      # subprocess.run(["ln", "-s", b_suc, b_suc2])
+      
+  print(transitions,"transitions")
 
 def render_scene(args,
     output_index=0,
@@ -368,7 +419,7 @@ def initialize_objects(args):
         'size': r,
         'stackable': properties['stackable'][shape_name] == 1,
         'rotation': rotation,
-        'color':rgba,
+        'color':tuple(rgba),
       }
       ok = True
       for o2 in objects:
@@ -400,8 +451,8 @@ def update_locations(stacks, stack_x):
   for stack, x_base in zip(stacks, stack_x):
     tmp_stack = []
     for obj in stack:
-      x = x_base + random.uniform(0,args.object_jitter)
-      y = random.uniform(0,args.object_jitter)
+      x = x_base
+      y = 0
       z = stack_height(tmp_stack) + obj["size"]
       obj["location"] = (x,y,z)
       tmp_stack.append(obj)
