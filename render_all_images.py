@@ -89,19 +89,9 @@ def initialize_parser():
                       help="Name of the split for which we are rendering. This will be added to " +
                       "the names of rendered images, and will also be stored in the JSON " +
                       "scene structure for each image.")
-  parser.add_argument('--output-image-dir', default='output/images/',
-                      help="The directory where output images will be stored. It will be " +
+  parser.add_argument('--output-dir', default='output',
+                      help="The directory where output will be stored. It will be " +
                       "created if it does not exist.")
-  parser.add_argument('--output-scene-dir', default='output/scenes/',
-                      help="The directory where output JSON scene structures will be stored. " +
-                      "It will be created if it does not exist.")
-  parser.add_argument('--output-scene-file', default='output/CLEVR_scenes.json',
-                      help="Path to write a single JSON file containing all scene information")
-  parser.add_argument('--output-blend-dir', default='output/blendfiles',
-                      help="The directory where blender scene files will be stored, if the " +
-                      "user requested that these files be saved using the " +
-                      "--save-blendfiles flag; in this case it will be created if it does " +
-                      "not already exist.")
   parser.add_argument('--save-blendfiles', type=int, default=0,
                       help="Setting --save-blendfiles 1 will cause the blender scene file for " +
                       "each generated image to be stored in the directory specified by " +
@@ -193,17 +183,30 @@ def main(args):
   num_digits = 6
   prefix = '%s_%s_' % (args.filename_prefix, args.split)
   template = '%s%%0%dd' % (prefix, num_digits)
-  img_template = os.path.join(args.output_image_dir, template)
-  scene_template = os.path.join(args.output_scene_dir, template)
-  blend_template = os.path.join(args.output_blend_dir, template)
 
-  if not os.path.isdir(args.output_image_dir):
-    os.makedirs(args.output_image_dir)
-  if not os.path.isdir(args.output_scene_dir):
-    os.makedirs(args.output_scene_dir)
-  if args.save_blendfiles == 1 and not os.path.isdir(args.output_blend_dir):
-    os.makedirs(args.output_blend_dir)
+  img_dir         = os.path.join(args.output_dir,"image")
+  scene_dir       = os.path.join(args.output_dir,"scene")
+  blend_dir       = os.path.join(args.output_dir,"blend")
+  trans_img_dir   = os.path.join(args.output_dir,"image_tr")
+  trans_scene_dir = os.path.join(args.output_dir,"scene_tr")
+  trans_blend_dir = os.path.join(args.output_dir,"blend_tr")
 
+  for d in [img_dir,
+            scene_dir,
+            blend_dir,
+            trans_img_dir,
+            trans_scene_dir,
+            trans_blend_dir]:
+    if not os.path.isdir(d):
+      os.makedirs(d)
+
+  img_template         = os.path.join(img_dir,  template)
+  scene_template       = os.path.join(scene_dir,template)
+  blend_template       = os.path.join(blend_dir,template)
+  trans_img_template   = os.path.join(trans_img_dir,  template)
+  trans_scene_template = os.path.join(trans_scene_dir,template)
+  trans_blend_template = os.path.join(trans_blend_dir,template)
+  
   # set up objects (except locations)
   objects = initialize_objects(args)
   stack_x = initialize_stack_x(args)
@@ -252,19 +255,19 @@ def main(args):
       # print(scene_hashkey(objects_suc))
       i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
 
-      i_pre = os.path.basename(i_pre)
-      s_pre = os.path.basename(s_pre)
-      b_pre = os.path.basename(b_pre)
-      i_suc = os.path.basename(i_suc)
-      s_suc = os.path.basename(s_suc)
-      b_suc = os.path.basename(b_suc)
+      i_pre = os.path.join("..","image",os.path.basename(i_pre))
+      s_pre = os.path.join("..","scene",os.path.basename(s_pre))
+      b_pre = os.path.join("..","blend",os.path.basename(b_pre))
+      i_suc = os.path.join("..","image",os.path.basename(i_suc))
+      s_suc = os.path.join("..","scene",os.path.basename(s_suc))
+      b_suc = os.path.join("..","blend",os.path.basename(b_suc))
       
-      i_pre2 = img_template % transitions +"_pre.png"
-      s_pre2 = scene_template % transitions+"_pre.json"
-      b_pre2 = blend_template % transitions+"_pre"
-      i_suc2 = img_template % transitions +"_suc.png"
-      s_suc2 = scene_template % transitions+"_suc.json"
-      b_suc2 = blend_template % transitions+"_suc"
+      i_pre2 = trans_img_template   % transitions+"_pre.png"
+      s_pre2 = trans_scene_template % transitions+"_pre.json"
+      b_pre2 = trans_blend_template % transitions+"_pre"
+      i_suc2 = trans_img_template   % transitions+"_suc.png"
+      s_suc2 = trans_scene_template % transitions+"_suc.json"
+      b_suc2 = trans_blend_template % transitions+"_suc"
       
       # link
       import subprocess
