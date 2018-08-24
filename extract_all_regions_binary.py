@@ -3,7 +3,7 @@
 import numpy as np
 import json
 import imageio
-import os
+import os.path
 import skimage.transform
 import argparse
 
@@ -21,7 +21,7 @@ def main(args):
     resized   = args.resized
     compress  = args.compress
 
-    scenes=os.path.join(directory,"scene_tr")
+    scenes=os.path.join(directory,"scene")
     files = os.listdir(scenes)
     filenum = len(files)
 
@@ -35,6 +35,7 @@ def main(args):
     images = np.zeros((filenum, maxobj, resized, resized, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
+    # store states
     for i,scenefile in enumerate(files):
         if 0==(i%100):
             print(i,"/",filenum)
@@ -53,11 +54,30 @@ def main(args):
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             images[i,j] = skimage.transform.resize(region,(resized,resized,3),preserve_range=True)
             bboxes[i,j] = bbox
-
+    
+    # store transitions
+    scenes=os.path.join(directory,"scene_tr")
+    files = os.listdir(scenes)
+    filenum = len(files)
+    
+    transitions = np.zeros(filenum, dtype=np.uint32)
+    for i,scenefile in enumerate(files):
+        if 0==(i%100):
+            print(i,"/",filenum)
+        
+        with open(os.path.join(scenes,scenefile), 'r') as f:
+            scene = json.load(f)
+        
+        imagefile = scene["image_filename"]
+        # CLEVR_new_000000.png
+        name, _ = os.path.splitext(imagefile)
+        index = int(name.split("_")[2])
+        transitions[i] = index
+    
     if compress:
-        np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize)
+        np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
     else:
-        np.savez(out,images=images,bboxes=bboxes,picsize=picsize)
+        np.savez(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
 
 if __name__ == '__main__':
     import sys
