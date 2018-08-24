@@ -260,7 +260,7 @@ def main(args):
                  output_scene=scene_path,
                  # output_blendfile=blend_path,
                  objects=objects)
-  print(states,"states")
+  print(states+1,"states")
   
   states = -1
   transitions = -1
@@ -310,7 +310,7 @@ def main(args):
       subprocess.run(["ln", "-s", s_suc, s_suc2])
       # subprocess.run(["ln", "-s", b_suc, b_suc2])
       
-  print(transitions,"transitions")
+  print(transitions+1,"transitions")
 
 def render_scene(args,
     output_index=0,
