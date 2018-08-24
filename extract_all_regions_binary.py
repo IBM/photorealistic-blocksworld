@@ -11,7 +11,6 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('--maxobj', type=int, default=10)
 parser.add_argument('--resized', type=int, default=15)
 parser.add_argument('--compress', default=True, action='store_true')
 
@@ -19,7 +18,6 @@ def main(args):
 
     directory = args.dir
     out       = args.out
-    maxobj    = args.maxobj
     resized   = args.resized
     compress  = args.compress
 
@@ -27,23 +25,28 @@ def main(args):
     files = os.listdir(scenes)
     filenum = len(files)
 
+    with open(os.path.join(scenes,files[0]), 'r') as f:
+        scene = json.load(f)
+        maxobj = len(scene["objects"])
+        imagefile = os.path.join(directory,"image",scene["image_filename"])
+        image = imageio.imread(imagefile)[:,:,:3]
+        picsize = image.shape
+
     images = np.zeros((filenum, maxobj, resized, resized, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
-    picsize = None
-    
     for i,scenefile in enumerate(files):
         if 0==(i%100):
             print(i,"/",filenum)
         
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
+            assert(maxobj==len(scene["objects"]))
 
         imagefile = os.path.join(directory,"image",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
-        if picsize is None:
-            picsize = image.shape
-        
+        assert(picsize==image.shape)
+
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
