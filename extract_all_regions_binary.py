@@ -11,14 +11,14 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('--resized', type=int, default=15)
+parser.add_argument('--resize', type=int, default=15)
 parser.add_argument('--compress', default=True, action='store_true')
 
 def main(args):
 
     directory = args.dir
     out       = args.out
-    resized   = args.resized
+    resize   = args.resize
     compress  = args.compress
 
     scenes=os.path.join(directory,"scene")
@@ -32,7 +32,7 @@ def main(args):
         image = imageio.imread(imagefile)[:,:,:3]
         picsize = image.shape
 
-    images = np.zeros((filenum, maxobj, resized, resized, 3), dtype=np.uint8)
+    images = np.zeros((filenum, maxobj, resize, resize, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
     # store states
@@ -52,7 +52,7 @@ def main(args):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
-            images[i,j] = skimage.transform.resize(region,(resized,resized,3),preserve_range=True)
+            images[i,j] = skimage.transform.resize(region,(resize,resize,3),preserve_range=True)
             bboxes[i,j] = bbox
     
     # store transitions
