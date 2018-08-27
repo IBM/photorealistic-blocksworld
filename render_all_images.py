@@ -81,6 +81,8 @@ def initialize_parser():
                       help="The path for dumping the initial set of objects and stack positions."+
                       "When specified but the file does not exist, create a new set of objects and dump a json to the file then terminate immediately."+
                       "When specified and the file exists, it reads the json file and proceeds.")
+  parser.add_argument('--statistics', default=None,
+                      help="The path for dumping the statistics e.g. num.state/transistions.")
   
   # Output settings
   parser.add_argument('--start-idx', default=0, type=int,
@@ -227,7 +229,6 @@ def main(args):
       with open(args.initial_objects, 'w') as f:
         init = {"objects":objects, "stack_x":stack_x}
         json.dump(init, f, indent=4)
-        return
 
   print(objects,stack_x)
   
@@ -311,6 +312,11 @@ def main(args):
       # subprocess.run(["ln", "-s", b_suc, b_suc2])
       
   print(transitions+1,"transitions")
+  if args.statistics:
+    with open(args.statistics, 'w') as f:
+      stat = {"states":states+1, "transitions":transitions+1}
+      json.dump(stat, f, indent=4)
+  
 
 def render_scene(args,
     output_index=0,

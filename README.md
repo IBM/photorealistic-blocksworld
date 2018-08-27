@@ -22,3 +22,10 @@ to use `extract_region.py`, you also need `imageio`. run `pip3 install --user im
 Example for extract_regions_binary.py:
 
 ./extract_regions_binary.py --maxobj 7 --out blocksworld.npz clevr_blocksworld
+
+
+to generate the full datasets:
+
+./generate_all.sh 2 2
+./generate_all.sh 3 3
+./generate_all.sh 5 3 true
