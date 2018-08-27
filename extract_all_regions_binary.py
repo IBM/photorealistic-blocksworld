@@ -23,6 +23,7 @@ def main(args):
 
     scenes=os.path.join(directory,"scene")
     files = os.listdir(scenes)
+    files.sort()
     filenum = len(files)
 
     with open(os.path.join(scenes,files[0]), 'r') as f:
@@ -58,6 +59,7 @@ def main(args):
     # store transitions
     scenes=os.path.join(directory,"scene_tr")
     files = os.listdir(scenes)
+    files.sort()
     filenum = len(files)
     
     transitions = np.zeros(filenum, dtype=np.uint32)
