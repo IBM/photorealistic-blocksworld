@@ -3,6 +3,7 @@
 objs=${1:-2}
 stacks=${2:-2}
 distributed=${3:-false}
+num_images=${4:-200}
 proj=$(date +%Y%m%d%H%M)
 jbsub="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 
@@ -25,7 +26,7 @@ transitions=$(jq .transitions stat-$objs-$stacks.json)
 
 if $distributed
 then
-    parallel "$jbsub $blender --start-idx {} --num-images 200 --use-gpu 1" ::: $(seq 0 200 $states)
+    parallel "$jbsub $blender --start-idx {} --num-images $num_images --use-gpu 1" ::: $(seq 0 $num_images $states)
     ccc/watch-proj $proj && $jbsub "./extract_all_regions_binary.py --out blocksworld-$objs-$stacks.npz output-$objs-$stacks/"
 else
     $jbsub "$blender ; ./extract_all_regions_binary.py --out blocksworld-$objs-$stacks.npz output-$objs-$stacks/"
