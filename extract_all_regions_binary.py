@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('--resize', type=int, default=30)
+parser.add_argument('--resize', type=int, default=32)
 parser.add_argument('--compress', default=True, action='store_true')
 
 def main(args):
