@@ -4,11 +4,9 @@ objs=${1:-2}
 stacks=${2:-2}
 distributed=${3:-false}
 num_images=${4:-200}
-proj=$(date +%Y%m%d%H%M)
-jbsub="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
-
-
 prefix="blocks-$objs-$stacks"
+proj=$(date +%Y%m%d%H%M)-render-$prefix
+jbsub="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 
 blender="blender -noaudio --background --python render_all_images.py -- \
       --output-dir      $prefix                   \
