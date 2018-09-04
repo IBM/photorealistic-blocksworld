@@ -281,12 +281,12 @@ def main(args):
         continue
 
       if args.dry_run:
+        # print(transitions,"pre",scene_hashkey(objects_pre))
+        # print(transitions,"suc",scene_hashkey(objects_suc))
         continue
       
       # should be deterministic
-      # print(scene_hashkey(objects_pre))
       i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
-      # print(scene_hashkey(objects_suc))
       i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
 
       i_pre = os.path.join("..","image",os.path.basename(i_pre))
