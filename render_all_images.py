@@ -9,7 +9,8 @@ from __future__ import print_function
 import math, sys, random, argparse, json, os, tempfile
 from datetime import datetime as dt
 from collections import Counter
-
+from copy import deepcopy as copy
+  
 """
 Renders random scenes using Blender, each with with a random number of objects;
 each object has a random size, position, color, and shape. Objects will be
@@ -515,8 +516,7 @@ def collect_objects(stacks):
   return objects
 
 def enumerate_stack(objects, stack_x):
-  import copy
-  objects = copy.deepcopy(objects)
+  objects = copy(objects)
   objects_tmp = [ o for o in objects ] # not the deep copy
   stacks = initialize_stacks(stack_x)
   sl = len(stacks)
@@ -536,7 +536,7 @@ def enumerate_stack(objects, stack_x):
         _objs.insert(o,obj)
     else:
       update_locations(stacks,stack_x)
-      yield objects, stacks
+      yield objects, stacks     # stacks holds pointers to objects
   
   yield from rec(objects_tmp)
 
@@ -581,8 +581,7 @@ actions = [
 ]
 
 def enumerate_successor_stack(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
+  stacks = copy(stacks)
   for action in actions:
     # print("selected action:",action)
     yield from action(stacks, stack_x)
