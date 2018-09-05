@@ -185,6 +185,7 @@ def main(args):
   global properties, color_name_to_rgba
   with open(args.properties_json, 'r') as f:
     properties = json.load(f)
+    properties["materials"] = sorted(properties["materials"].values())
     color_name_to_rgba = {
       name : [float(c) / 255.0 for c in rgb] + [1.0] \
       for name, rgb in properties['colors'].items()
@@ -528,7 +529,7 @@ def enumerate_stack(objects, stack_x):
         obj = _objs.pop(o)
         for s in range(sl):
           stacks[s].append(obj)
-          for m in properties["materials"].values():
+          for m in properties["materials"]:
             obj["material"] = m
             yield from rec(_objs)
             del obj["material"]
@@ -557,7 +558,7 @@ def action_change_material(stacks, stack_x):
   nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
   for i in nonempty_stacks:
     material = stacks[i][-1]["material"]
-    tmp = list(properties['materials'].values())
+    tmp = copy(properties['materials'])
     tmp.remove(material)
     for new_material in tmp:
       stacks[i][-1]["material"] = new_material
