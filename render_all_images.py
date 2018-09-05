@@ -298,6 +298,19 @@ def main(args):
         print(transitions,"pre",scene_hashkey(objects_pre))
         print(transitions,"suc",scene_hashkey(objects_suc))
         raise "more than two materials change!"
+
+      # check 2
+      count_match = 0
+      for oprekey in prekey:
+        for osuckey in suckey:
+          if oprekey == osuckey:
+            count_match+=1
+      if not count_match == 2:
+        print(transitions,"pre",scene_hashkey(objects_pre))
+        print(transitions,"suc",scene_hashkey(objects_suc))
+        raise "more than two objects change!"
+        
+      
       
       if args.dry_run:
         # print(transitions,"pre",scene_hashkey(objects_pre))
