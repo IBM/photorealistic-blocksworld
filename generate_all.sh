@@ -18,7 +18,7 @@ blender="blender -noaudio --background --python render_all_images.py -- \
       --num-objects $objs                                \
       --max-stacks $stacks                               "
 
-$blender --dry-run              # necessary for init-o-s.json
+$blender --dry-run || exit 1      # necessary for init-o-s.json
 
 states=$(jq      .states      $prefix-stat.json)
 transitions=$(jq .transitions $prefix-stat.json)

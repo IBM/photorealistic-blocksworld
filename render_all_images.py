@@ -287,11 +287,14 @@ def main(args):
       count_pre = 0
       for okey in prekey:
         material = okey[4]
+        assert type(material) is str
+        # print(material)
         if material == properties["materials"][0]:
           count_pre += 1
       count_suc = 0
       for okey in suckey:
         material = okey[4]
+        assert type(material) is str
         if material == properties["materials"][0]:
           count_suc += 1
       if not ( count_suc == count_pre or count_suc == count_pre+1 or count_suc == count_pre-1):
@@ -305,7 +308,7 @@ def main(args):
         for osuckey in suckey:
           if oprekey == osuckey:
             count_match+=1
-      if not count_match == 2:
+      if not count_match == len(objects)-1:
         print(transitions,"pre",scene_hashkey(objects_pre))
         print(transitions,"suc",scene_hashkey(objects_suc))
         raise "more than two objects change!"
