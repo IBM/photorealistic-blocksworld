@@ -280,7 +280,25 @@ def main(args):
         print(transitions)
       if not (args.start_idx <= states < args.start_idx + args.num_images ):
         continue
+      prekey = scene_hashkey(objects_pre)
+      suckey = scene_hashkey(objects_suc)
 
+      # check 1
+      count_pre = 0
+      for okey in prekey:
+        material = okey[4]
+        if material == properties["materials"][0]:
+          count_pre += 1
+      count_suc = 0
+      for okey in suckey:
+        material = okey[4]
+        if material == properties["materials"][0]:
+          count_suc += 1
+      if not ( count_suc == count_pre or count_suc == count_pre+1 or count_suc == count_pre-1):
+        print(transitions,"pre",scene_hashkey(objects_pre))
+        print(transitions,"suc",scene_hashkey(objects_suc))
+        raise "more than two materials change!"
+      
       if args.dry_run:
         # print(transitions,"pre",scene_hashkey(objects_pre))
         # print(transitions,"suc",scene_hashkey(objects_suc))
