@@ -9,7 +9,8 @@ from __future__ import print_function
 import math, sys, random, argparse, json, os, tempfile
 from datetime import datetime as dt
 from collections import Counter
-
+from copy import deepcopy as copy
+  
 """
 Renders random scenes using Blender, each with with a random number of objects;
 each object has a random size, position, color, and shape. Objects will be
@@ -77,33 +78,30 @@ def initialize_parser():
   
   parser.add_argument('--object-jitter', default=0.2, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
+  parser.add_argument('--initial-objects', default=None,
+                      help="The path for dumping the initial set of objects and stack positions."+
+                      "When specified but the file does not exist, create a new set of objects and dump a json to the file then terminate immediately."+
+                      "When specified and the file exists, it reads the json file and proceeds.")
+  parser.add_argument('--statistics', default=None,
+                      help="The path for dumping the statistics e.g. num.state/transistions.")
   
   # Output settings
   parser.add_argument('--start-idx', default=0, type=int,
                       help="The index at which to start for numbering rendered images. Setting " +
                       "this to non-zero values allows you to distribute rendering across " +
                       "multiple machines and recombine the results later.")
-  parser.add_argument('--num-images', default=5, type=int,
+  parser.add_argument('--num-images', default=float('inf'), type=float,
                       help="The number of images to render")
+  
   parser.add_argument('--filename-prefix', default='CLEVR',
                       help="This prefix will be prepended to the rendered images and JSON scenes")
   parser.add_argument('--split', default='new',
                       help="Name of the split for which we are rendering. This will be added to " +
                       "the names of rendered images, and will also be stored in the JSON " +
                       "scene structure for each image.")
-  parser.add_argument('--output-image-dir', default='output/images/',
-                      help="The directory where output images will be stored. It will be " +
+  parser.add_argument('--output-dir', default='output',
+                      help="The directory where output will be stored. It will be " +
                       "created if it does not exist.")
-  parser.add_argument('--output-scene-dir', default='output/scenes/',
-                      help="The directory where output JSON scene structures will be stored. " +
-                      "It will be created if it does not exist.")
-  parser.add_argument('--output-scene-file', default='output/CLEVR_scenes.json',
-                      help="Path to write a single JSON file containing all scene information")
-  parser.add_argument('--output-blend-dir', default='output/blendfiles',
-                      help="The directory where blender scene files will be stored, if the " +
-                      "user requested that these files be saved using the " +
-                      "--save-blendfiles flag; in this case it will be created if it does " +
-                      "not already exist.")
   parser.add_argument('--save-blendfiles', type=int, default=0,
                       help="Setting --save-blendfiles 1 will cause the blender scene file for " +
                       "each generated image to be stored in the directory specified by " +
@@ -147,13 +145,47 @@ def initialize_parser():
                       "quality of the rendered image but may affect the speed; CPU-based " +
                       "rendering may achieve better performance using smaller tile sizes " +
                       "while larger tile sizes may be optimal for GPU-based rendering.")
+  parser.add_argument('--dry-run', default=False, action='store_true',
+                      help="Do not render images and count the number of possible states and transitions.")
   return parser
 
+def scene_hashkey(objects):
+    # Example objects
+    # [{'shape': 'SmoothCube_v2',
+    #   'location': (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
+    #       'bbox': (94.0, 143.0, 108.0, 159.0),
+    #       'color': [0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0],
+    #       'pixel_coords': (101, 151, 16.81483268737793),
+    #       'material': 'MyMetal',
+    #       'size': 0.31819805153394637,
+    #       'stackable': True,
+    #       'rotation': 122.37145376299921},
+    #       ...
+    # ]
+    key = tuple(
+      sorted([
+        (o['shape'],
+         o['location'],
+         tuple(o['color']),
+         o['size'],
+         o['material'],)
+        for o in objects]))
+    
+    # key = (('SmoothCube_v2',
+    #   (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
+    #   (94.0, 143.0, 108.0, 159.0),
+    #   (0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0),
+    #   'MyMetal',
+    #   0.31819805153394637),...
+    # )
+    return key
+  
 def main(args):
   # Load the property file
   global properties, color_name_to_rgba
   with open(args.properties_json, 'r') as f:
     properties = json.load(f)
+    properties["materials"] = sorted(properties["materials"].values())
     color_name_to_rgba = {
       name : [float(c) / 255.0 for c in rgb] + [1.0] \
       for name, rgb in properties['colors'].items()
@@ -162,68 +194,165 @@ def main(args):
   num_digits = 6
   prefix = '%s_%s_' % (args.filename_prefix, args.split)
   template = '%s%%0%dd' % (prefix, num_digits)
-  img_template = os.path.join(args.output_image_dir, template)
-  scene_template = os.path.join(args.output_scene_dir, template)
-  blend_template = os.path.join(args.output_blend_dir, template)
 
-  if not os.path.isdir(args.output_image_dir):
-    os.makedirs(args.output_image_dir)
-  if not os.path.isdir(args.output_scene_dir):
-    os.makedirs(args.output_scene_dir)
-  if args.save_blendfiles == 1 and not os.path.isdir(args.output_blend_dir):
-    os.makedirs(args.output_blend_dir)
+  img_dir         = os.path.join(args.output_dir,"image")
+  scene_dir       = os.path.join(args.output_dir,"scene")
+  blend_dir       = os.path.join(args.output_dir,"blend")
+  trans_img_dir   = os.path.join(args.output_dir,"image_tr")
+  trans_scene_dir = os.path.join(args.output_dir,"scene_tr")
+  trans_blend_dir = os.path.join(args.output_dir,"blend_tr")
 
+  for d in [img_dir,
+            scene_dir,
+            blend_dir,
+            trans_img_dir,
+            trans_scene_dir,
+            trans_blend_dir]:
+    if not os.path.isdir(d):
+      os.makedirs(d)
+
+  img_template         = os.path.join(img_dir,  template)
+  scene_template       = os.path.join(scene_dir,template)
+  blend_template       = os.path.join(blend_dir,template)
+  trans_img_template   = os.path.join(trans_img_dir,  template)
+  trans_scene_template = os.path.join(trans_scene_dir,template)
+  trans_blend_template = os.path.join(trans_blend_dir,template)
+  
   # set up objects (except locations)
   objects = initialize_objects(args)
   stack_x = initialize_stack_x(args)
-  
-  all_scene_paths = []
-  for i in range(args.num_images):
-    img_path = img_template % (i + args.start_idx)
-    scene_path = scene_template % (i + args.start_idx)
-    all_scene_paths.append(scene_path+"_pre.json")
-    all_scene_paths.append(scene_path+"_suc.json")
-    blend_path = None
-    if args.save_blendfiles == 1:
-      blend_path = blend_template % (i + args.start_idx)
+  if args.initial_objects:
+    if os.path.isfile(args.initial_objects):
+      with open(args.initial_objects, 'r') as f:
+        init = json.load(f)
+        objects = init["objects"]
+        stack_x = init["stack_x"]
+    else:
+      with open(args.initial_objects, 'w') as f:
+        init = {"objects":objects, "stack_x":stack_x}
+        json.dump(init, f, indent=4)
 
-    objects_pre, stacks = build_random_stack(objects, stack_x)
-    objects_suc         = build_successor_stack(stacks, stack_x)
+  print(objects,stack_x)
+  
+  states = -1
+  hashtable = dict()
+  for objects, stacks in enumerate_stack(objects, stack_x):
+    key = scene_hashkey(objects)
+    if key in hashtable:
+      continue
+    
+    states +=1
+    if 0 == (states%10000):
+      print(states)
+
+    img_path = img_template % states +".png"
+    scene_path = scene_template % states+".json"
+    blend_path = blend_template % states
+    
+    hashtable[key] = (img_path, scene_path, blend_path)
+
+    if not (args.start_idx <= states < args.start_idx + args.num_images ):
+      continue
+    if args.dry_run:
+      continue
     
     render_scene(args,
-      output_index=(i + args.start_idx),
-      output_split=args.split,
-      output_image=img_path+"_pre.png",
-      output_scene=scene_path+"_pre.json",
-      output_blendfile=(blend_path and blend_path+"_pre.blend"),
-      objects=objects_pre
-    )
-    render_scene(args,
-      output_index=(i + args.start_idx),
-      output_split=args.split,
-      output_image=img_path+"_suc.png",
-      output_scene=scene_path+"_suc.json",
-      output_blendfile=(blend_path and blend_path+"_suc.blend"),
-      objects=objects_suc
-    )
+                 output_index=states,
+                 output_split=args.split,
+                 output_image=img_path,
+                 output_scene=scene_path,
+                 # output_blendfile=blend_path,
+                 objects=objects)
+  print(states+1,"states")
+  
+  states = -1
+  transitions = -1
+  hashset = set()
+  for objects_pre, stacks in enumerate_stack(objects, stack_x):
+    key = scene_hashkey(objects_pre)
+    if key in hashset:
+      continue
+    states +=1
+    hashset.add(key)
+    for objects_suc in enumerate_successor_stack(stacks, stack_x):
+      transitions+=1
+      if 0 == (transitions%10000):
+        print(transitions)
+      if not (args.start_idx <= states < args.start_idx + args.num_images ):
+        continue
+      prekey = scene_hashkey(objects_pre)
+      suckey = scene_hashkey(objects_suc)
 
-  # After rendering all images, combine the JSON files for each scene into a
-  # single JSON file.
-  all_scenes = []
-  for scene_path in all_scene_paths:
-    with open(scene_path, 'r') as f:
-      all_scenes.append(json.load(f))
-  output = {
-    'info': {
-      'date': args.date,
-      'version': args.version,
-      'split': args.split,
-      'license': args.license,
-    },
-    'scenes': all_scenes
-  }
-  with open(args.output_scene_file, 'w') as f:
-    json.dump(output, f)
+      # check 1
+      count_pre = 0
+      for okey in prekey:
+        material = okey[4]
+        assert type(material) is str
+        # print(material)
+        if material == properties["materials"][0]:
+          count_pre += 1
+      count_suc = 0
+      for okey in suckey:
+        material = okey[4]
+        assert type(material) is str
+        if material == properties["materials"][0]:
+          count_suc += 1
+      if not ( count_suc == count_pre or count_suc == count_pre+1 or count_suc == count_pre-1):
+        print(transitions,"pre",scene_hashkey(objects_pre))
+        print(transitions,"suc",scene_hashkey(objects_suc))
+        raise "more than two materials change!"
+
+      # check 2
+      count_match = 0
+      for oprekey in prekey:
+        for osuckey in suckey:
+          if oprekey == osuckey:
+            count_match+=1
+      if not count_match == len(objects)-1:
+        print(transitions,"pre",scene_hashkey(objects_pre))
+        print(transitions,"suc",scene_hashkey(objects_suc))
+        raise "more than two objects change!"
+        
+      
+      
+      if args.dry_run:
+        # print(transitions,"pre",scene_hashkey(objects_pre))
+        # print(transitions,"suc",scene_hashkey(objects_suc))
+        continue
+      
+      # should be deterministic
+      i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
+      i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
+
+      i_pre = os.path.join("..","image",os.path.basename(i_pre))
+      s_pre = os.path.join("..","scene",os.path.basename(s_pre))
+      b_pre = os.path.join("..","blend",os.path.basename(b_pre))
+      i_suc = os.path.join("..","image",os.path.basename(i_suc))
+      s_suc = os.path.join("..","scene",os.path.basename(s_suc))
+      b_suc = os.path.join("..","blend",os.path.basename(b_suc))
+      
+      i_pre2 = trans_img_template   % transitions+"_pre.png"
+      s_pre2 = trans_scene_template % transitions+"_pre.json"
+      b_pre2 = trans_blend_template % transitions+"_pre"
+      i_suc2 = trans_img_template   % transitions+"_suc.png"
+      s_suc2 = trans_scene_template % transitions+"_suc.json"
+      b_suc2 = trans_blend_template % transitions+"_suc"
+      
+      # link
+      import subprocess
+      subprocess.run(["ln", "-s", i_pre, i_pre2])
+      subprocess.run(["ln", "-s", s_pre, s_pre2])
+      # subprocess.run(["ln", "-s", b_pre, b_pre2])
+      subprocess.run(["ln", "-s", i_suc, i_suc2])
+      subprocess.run(["ln", "-s", s_suc, s_suc2])
+      # subprocess.run(["ln", "-s", b_suc, b_suc2])
+      
+  print(transitions+1,"transitions")
+  if args.statistics:
+    with open(args.statistics, 'w') as f:
+      stat = {"states":states+1, "transitions":transitions+1}
+      json.dump(stat, f, indent=4)
+  
 
 def render_scene(args,
     output_index=0,
@@ -377,7 +506,7 @@ def initialize_objects(args):
         'size': r,
         'stackable': properties['stackable'][shape_name] == 1,
         'rotation': rotation,
-        'color':rgba,
+        'color':tuple(rgba),
       }
       ok = True
       for o2 in objects:
@@ -409,8 +538,8 @@ def update_locations(stacks, stack_x):
   for stack, x_base in zip(stacks, stack_x):
     tmp_stack = []
     for obj in stack:
-      x = x_base + random.uniform(0,args.object_jitter)
-      y = random.uniform(0,args.object_jitter)
+      x = x_base
+      y = 0
       z = stack_height(tmp_stack) + obj["size"]
       obj["location"] = (x,y,z)
       tmp_stack.append(obj)
@@ -421,58 +550,54 @@ def collect_objects(stacks):
     objects.extend(stack)
   return objects
 
-def build_random_stack(objects, stack_x):
-  import copy
-  objects = copy.deepcopy(objects)
-  random.shuffle(objects)
-
+def enumerate_stack(objects, stack_x):
+  objects = copy(objects)
+  objects_tmp = [ o for o in objects ] # not the deep copy
   stacks = initialize_stacks(stack_x)
+  sl = len(stacks)
   
-  for obj in objects:
-    # Choose x and z
-    stackable = [ stack for stack in stacks if \
-                  ((not stack) or stack[-1]["stackable"]) ]
-    if not stackable:
-      print("!!!!!! retry stacking !!!!!!")
-      # If we can place no more objects, start over.
-      return build_random_stack(objects, stack_x)
-      
-    random.choice(stackable).append(obj)
-
-  update_locations(stacks,stack_x)
-
-  for obj in objects:
-    obj["material"] = random_dict(properties["materials"])[1]
+  def rec(_objs):
+    ol = len(_objs)
+    if ol>0:
+      for o in range(ol):
+        obj = _objs.pop(o)
+        for s in range(sl):
+          stacks[s].append(obj)
+          for m in properties["materials"]:
+            obj["material"] = m
+            yield from rec(_objs)
+            del obj["material"]
+          stacks[s].pop()
+        _objs.insert(o,obj)
+    else:
+      update_locations(stacks,stack_x)
+      yield objects, stacks     # stacks holds pointers to objects
   
-  return objects, stacks
+  yield from rec(objects_tmp)
 
 def action_move(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
-  nonempty_stacks  = [stack for stack in stacks if stack]
-  stack_from       = random.choice(nonempty_stacks)
-  different_stacks = [stack for stack in stacks if stack != stack_from]
-  stack_to         = random.choice(different_stacks)
-  
-  obj = stack_from.pop()
-  stack_to.append(obj)
-  update_locations(stacks,stack_x)
-  
-  return collect_objects(stacks)
-
+  nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
+  for i in nonempty_stacks:
+    different_stacks = [j for j,stack in enumerate(stacks) if j != i]
+    for j in different_stacks:
+      obj = stacks[i].pop()
+      stacks[j].append(obj)
+      update_locations(stacks,stack_x)
+      yield collect_objects(stacks)
+      stacks[j].pop()
+      stacks[i].append(obj)
+      update_locations(stacks,stack_x)
+      
 def action_change_material(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
-  target_stacks  = [stack for stack in stacks if stack]
-  if target_stacks:
-    stack                 = random.choice(target_stacks)
-    material = stack[-1]["material"]
-    tmp = list(properties['materials'].values())
+  nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
+  for i in nonempty_stacks:
+    material = stacks[i][-1]["material"]
+    tmp = copy(properties['materials'])
     tmp.remove(material)
-    stack[-1]["material"] = random.choice(tmp)
-    return collect_objects(stacks)
+    for new_material in tmp:
+      stacks[i][-1]["material"] = new_material
+      yield collect_objects(stacks)
+    stacks[i][-1]["material"] = material
 
 def action_remove(stacks, stack_x):
   import copy
@@ -490,14 +615,11 @@ actions = [
   # action_remove
 ]
 
-def build_successor_stack(stacks, stack_x):
-  action = random.choice(actions)
-  result = action(stacks, stack_x)
-  if result:
-    return result
-  else:
-    # recursion
-    return build_successor_stack(stacks, stack_x)
+def enumerate_successor_stack(stacks, stack_x):
+  stacks = copy(stacks)
+  for action in actions:
+    # print("selected action:",action)
+    yield from action(stacks, stack_x)
 
 def add_objects(scene_struct, camera, objects):
   """
