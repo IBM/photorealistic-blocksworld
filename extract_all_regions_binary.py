@@ -11,7 +11,8 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('--resize', type=int, default=32)
+parser.add_argument('--resize', type=int, default=32,
+                    description="the size of the image patch resized from the region originally extracted")
 
 def main(args):
 
