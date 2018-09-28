@@ -18,6 +18,10 @@ For the original readme, see [README-clevr.md](README-clevr.md) .
 
 Note: I changed all keyword options from using underscores to using hyphens (e.g. `--use_gpu` -> `--use-gpu`).
 
+<div align="center">
+  <img src="example/image/CLEVR_new_010000.png" width="800px">
+</div>
+
 # Running
 
 To generate a small dataset with 2 blocks / 2 stacks:
