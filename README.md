@@ -26,7 +26,7 @@ Note: I changed all keyword options from using underscores to using hyphens (e.g
 
 `render_images.py` : Renders all possible states of the blocks world and dump the metadata (e.g. bounding boxes) in the corresponding json files.
 
-`extract_region.py` : Extract each region that contains an object, using the metadata json file.
+`extract_region.py` : Extract each region that contains an object from an image and store them in png files. Takes a metadata json file as the input.
 
 `extract_all_regions_binary.py` : Extract the regions from the every images generated, resize them to 32x32 and store them in a `.npz` container along with the bounding box vector (x1,y1,x2,y2).
 
