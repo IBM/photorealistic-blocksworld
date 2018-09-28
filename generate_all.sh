@@ -42,7 +42,9 @@ transitions=$(jq .transitions $prefix-stat.json)
 if $distributed
 then
     parallel "$submit $blender --use-gpu 1 --start-idx {} --num-images $num_images" ::: $(seq 0 $num_images $states)
-    ccc/watch-proj $proj && $submit "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
+    echo "Run the following command when all jobs have finished:"
+    echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
 else
-    $submit "$blender --use-gpu 1 ; ./extract_all_regions_binary.py --out $prefix.npz $prefix/"
+    $blender --use-gpu 1
+    ./extract_all_regions_binary.py --out $prefix.npz $prefix/
 fi
