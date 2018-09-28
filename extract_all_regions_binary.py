@@ -11,15 +11,14 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('--resize', type=int, default=32)
-parser.add_argument('--compress', default=True, action='store_true')
+parser.add_argument('--resize', type=int, default=32,
+                    description="the size of the image patch resized from the region originally extracted")
 
 def main(args):
 
     directory = args.dir
     out       = args.out
     resize   = args.resize
-    compress  = args.compress
 
     scenes=os.path.join(directory,"scene")
     files = os.listdir(scenes)
@@ -76,10 +75,7 @@ def main(args):
         index = int(name.split("_")[2])
         transitions[i] = index
     
-    if compress:
-        np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
-    else:
-        np.savez(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
+    np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
 
 if __name__ == '__main__':
     import sys

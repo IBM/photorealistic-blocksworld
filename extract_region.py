@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"Extract the regions from a scene json file"
+
 import numpy as np
 import json
 import imageio
