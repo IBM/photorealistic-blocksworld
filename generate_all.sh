@@ -24,7 +24,7 @@ proj=$(date +%Y%m%d%H%M)-render-$prefix
 
 submit="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 
-blender="blender -noaudio --background --python render_all_images.py -- \
+blender="blender -noaudio --background --python render_images.py -- \
       --output-dir      $prefix                   \
       --initial-objects $prefix-init.json                \
       --statistics      $prefix-stat.json                \
