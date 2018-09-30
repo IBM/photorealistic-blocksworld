@@ -1,0 +1,7 @@
+*~
+#*
+*.pyc
+*.png
+output/
+/*.json
+/*.npz
