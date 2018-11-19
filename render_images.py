@@ -510,7 +510,7 @@ def initialize_objects(args):
       }
       ok = True
       for o2 in objects:
-        if object_equal(obj, o2):
+        if object_equal(obj, o2) or obj['color'] == o2['color']:
           ok = False
           break
       if ok:
