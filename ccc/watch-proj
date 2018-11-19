@@ -1,0 +1,15 @@
+#!/bin/bash
+
+proj=${1:-default}
+sec=${2:-60}
+
+while jbinfo -proj $proj | grep -q "RUN\|AVAIL"
+do
+    
+    echo "[$(date)]  Project $proj still running (recheck after $sec sec)"
+    sleep $sec
+done
+
+echo "[$(date)]  Project $proj finished"
+
+

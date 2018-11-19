@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# same as watch-proj, but automatically reruns the EXITed jobs
+
+proj=${1:-default}
+sec=${2:-60}
+
+reset (){
+    exited=$(jbinfo -proj $proj | grep EXIT | cut -d' ' -f1)
+    [ -z "$exited" ] || jbadmin -reset $exited
+    sleep $sec
+}
+
+reset
+
+while jbinfo -proj $proj | grep -q "RUN\|AVAIL"
+do
+    echo "[$(date)]  Project $proj still running (recheck after $sec sec)"
+    reset
+done
+
+echo "[$(date)]  Project $proj finished"
