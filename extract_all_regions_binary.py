@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
 parser.add_argument('--resize', type=int, default=32,
-                    description="the size of the image patch resized from the region originally extracted")
+                    help="the size of the image patch resized from the region originally extracted")
 
 def main(args):
 
