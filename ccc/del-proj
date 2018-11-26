@@ -1,0 +1,11 @@
+#!/bin/bash -x
+
+if [ -z "$@" ]
+then
+    proj=${1:-default}
+else
+    proj="$@"
+fi
+
+parallel jbadmin -del -proj {} all &>/dev/null ::: $proj
+

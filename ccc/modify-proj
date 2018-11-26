@@ -1,0 +1,8 @@
+#!/bin/bash
+
+proj=$1
+shift
+
+parallel jbinfo -long -state exit -proj $proj \
+    | awk '{print $1}' \
+    | parallel "jbadmin -reset -hold {}&& sleep 5 &&jbmodify $@ {}&&sleep 5 &&jbadmin -cont {}"

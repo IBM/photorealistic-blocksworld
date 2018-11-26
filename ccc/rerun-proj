@@ -6,9 +6,14 @@ proj=${1:-default}
 sec=${2:-60}
 
 reset (){
-    exited=$(jbinfo -proj $proj | grep EXIT | cut -d' ' -f1)
+    exited=$(jbinfo -proj $proj | grep EXIT | awk '{print $1}')
     [ -z "$exited" ] || jbadmin -reset $exited
-    sleep $sec
+    if [ $sec -eq 0 ]
+    then
+        exit
+    else
+        sleep $sec
+    fi
 }
 
 reset
