@@ -49,4 +49,25 @@ Once you get done, run
 
     ./generate_all.sh 5 3 true
 
+# Citation
+
+``` bibtex
+@article{asai2018blocksworld,
+	author = {Asai, Masataro},
+	journal = {arXiv preprint arXiv:1812.01818},
+	title = {{Photo-Realistic Blocksworld Dataset}},
+	year = {2018}
+}
+```
+
+Relevant citation:
+
+``` bibtex
+@article{asai2018perminv,
+	author = {Asai, Masataro},
+	journal = {arXiv preprint arXiv:1812.01217},
+	title = {{Set Cross Entropy: Likelihood-based Permutation Invariant Loss Function for Probability Distributions}},
+	year = {2018}
+}
+```
 
