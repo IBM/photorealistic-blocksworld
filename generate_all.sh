@@ -20,6 +20,7 @@ max=${2:-8}
 distributed=${3:-false}
 num_images=${4:-200}
 gpu=${5:true}
+num_images_per_worker=${6:-20}
 prefix="clevr-$min-$max"
 proj=$(date +%Y%m%d%H%M)-render-$prefix
 
@@ -41,7 +42,7 @@ blender="blender -noaudio --background --python render_images.py -- \
 
 if $distributed
 then
-    parallel "$submit $blender $gpuflag --start-idx {} --num-images $num_images --render-num-samples 300" ::: $(seq 0 $num_images $states)
+    parallel "$submit $blender $gpuflag --start-idx {} --num-images $num_images --render-num-samples 300" ::: $(seq 0 $num_images_per_worker $num_images)
     echo "Run the following command when all jobs have finished:"
     echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
 else
