@@ -182,10 +182,8 @@ def main(args):
   trans_scene_template = os.path.join(trans_scene_dir,template)
   trans_blend_template = os.path.join(trans_blend_dir,template)
 
-  i = 0
-  while i < args.num_images:
-    if not (args.start_idx <= i < args.start_idx + args.num_images ):
-      continue
+  i = args.start_idx
+  while i < args.start_idx + args.num_images:
     if args.dry_run:
       continue
       
