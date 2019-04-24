@@ -56,3 +56,4 @@ fi
 # distributed: ./generate_all.sh 3 6 true 10 true
 # distributed: ./generate_all.sh 3 6 true
 
+# distributed: ./generate_all.sh 3 8 true 10000 true 100
