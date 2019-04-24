@@ -49,3 +49,10 @@ else
     $blender $gpuflag
     ./extract_all_regions_binary.py --out $prefix.npz $prefix/
 fi
+
+
+# example:
+# single pc:   ./generate_all.sh 3 6 false 10 false
+# distributed: ./generate_all.sh 3 6 true 10 true
+# distributed: ./generate_all.sh 3 6 true
+
