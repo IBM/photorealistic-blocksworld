@@ -46,7 +46,7 @@ then
     echo "Run the following command when all jobs have finished:"
     echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
 else
-    $blender $gpuflag
+    $blender $gpuflag --num-images $num_images
     ./extract_all_regions_binary.py --out $prefix.npz $prefix/
 fi
 
