@@ -150,7 +150,6 @@ def main(args):
   global properties, color_name_to_rgba
   with open(args.properties_json, 'r') as f:
     properties = json.load(f)
-    properties["materials"] = sorted(properties["materials"].values())
     color_name_to_rgba = {
       name : [float(c) / 255.0 for c in rgb] + [1.0] \
       for name, rgb in properties['colors'].items()
@@ -213,28 +212,29 @@ def initialize_objects(args):
     num_objects = random.randint(args.min_objects, args.max_objects)
     
     def dist(o1, o2):
-      x1,y1,_ = o1.location
-      x2,y2,_ = o2.location
-      dx      = x1-x2
-      dy      = y1-y2
+      x1,y1,_ = o1["location"]
+      x2,y2,_ = o2["location"]
+      dx=x1-x2
+      dy=y1-y2
       return math.sqrt(dx * dx + dy * dy)
 
     def dist_good(o1, o2):
-        return dist(o1,o2) - o1.size - o2.size < args.min_dist
+        return dist(o1,o2) - o1["size"] - o2["size"] > args.min_dist
             
-    objects = []
-    i             = 0
+    objects         = []
+    i = 0
     while i < num_objects:
         num_tries = 0
-        success   = False
+        success = False
         while num_tries < args.max_retries:
             shape_name, shape_path = random_dict(properties['shapes'])
             _, rgba                = random_dict(color_name_to_rgba)
             _, r                   = random_dict(properties['sizes'])
+            _, m                   = random_dict(properties['materials'])
             rotation               = 360.0 * random.random()
             # For cube, adjust the size a bit
             if shape_name == 'cube':
-                r / = math.sqrt(2)
+                r /= math.sqrt(2)
 
             o1 = {
                 'shape': shape_path,
@@ -242,6 +242,7 @@ def initialize_objects(args):
                 'stackable': properties['stackable'][shape_name] == 1,
                 'rotation': rotation,
                 'color':tuple(rgba),
+                'material': m,
                 'location': (random.uniform(-3, 3),
                              random.uniform(-3, 3),
                              r)
@@ -258,27 +259,27 @@ def initialize_objects(args):
                 success = True
                 break
 
-            num_tries + = 1
+            num_tries += 1
             
         if not success:
             objects = []
             i       = 0
             continue
-        i + = 1
+        i += 1
     
     return objects
 
 def render_scene(args,
     output_index=0,
-    output_split     = 'none',
-    output_image     = 'render.png',
-    output_scene     = 'render_json',
-    output_blendfile = None,
-    objects          = [],
+    output_split='none',
+    output_image='render.png',
+    output_scene='render_json',
+    output_blendfile=None,
+    objects=[],
   ):
 
   # Load the main blendfile
-  bpy.ops.wm.open_mainfile(filepath = args.base_scene_blendfile)
+  bpy.ops.wm.open_mainfile(filepath=args.base_scene_blendfile)
 
   # Load materials
   utils.load_materials(args.material_dir)
@@ -287,26 +288,26 @@ def render_scene(args,
   # We use functionality specific to the CYCLES renderer so BLENDER_RENDER
   # cannot be used.
   render_args = bpy.context.scene.render
-  render_args.engine                = "CYCLES"
-  render_args.filepath              = output_image
-  render_args.resolution_x          = args.width
-  render_args.resolution_y          = args.height
+  render_args.engine = "CYCLES"
+  render_args.filepath = output_image
+  render_args.resolution_x = args.width
+  render_args.resolution_y = args.height
   render_args.resolution_percentage = 100
-  render_args.tile_x                = args.render_tile_size
-  render_args.tile_y                = args.render_tile_size
+  render_args.tile_x = args.render_tile_size
+  render_args.tile_y = args.render_tile_size
   if args.use_gpu == 1:
     # Blender changed the API for enabling CUDA at some point
     if bpy.app.version < (2, 78, 0):
       bpy.context.user_preferences.system.compute_device_type = 'CUDA'
       bpy.context.user_preferences.system.compute_device = 'CUDA_0'
     else:
-      cycles_prefs                     = bpy.context.user_preferences.addons['cycles'].preferences
+      cycles_prefs = bpy.context.user_preferences.addons['cycles'].preferences
       cycles_prefs.compute_device_type = 'CUDA'
 
   # Some CYCLES-specific stuff
-  bpy.data.worlds['World'].cycles.sample_as_light  = True
-  bpy.context.scene.cycles.blur_glossy             = 2.0
-  bpy.context.scene.cycles.samples                 = args.render_num_samples
+  bpy.data.worlds['World'].cycles.sample_as_light = True
+  bpy.context.scene.cycles.blur_glossy = 2.0
+  bpy.context.scene.cycles.samples = args.render_num_samples
   bpy.context.scene.cycles.transparent_min_bounces = args.render_min_bounces
   bpy.context.scene.cycles.transparent_max_bounces = args.render_max_bounces
   if args.use_gpu == 1:
@@ -322,8 +323,8 @@ def render_scene(args,
   }
 
   # Put a plane on the ground so we can compute cardinal directions
-  bpy.ops.mesh.primitive_plane_add(radius = 5)
-  plane                                   = bpy.context.object
+  bpy.ops.mesh.primitive_plane_add(radius=5)
+  plane = bpy.context.object
 
   def rand(L):
     return 2.0 * L * (random.random() - 0.5)
@@ -331,18 +332,18 @@ def render_scene(args,
   # Add random jitter to camera position
   if args.camera_jitter > 0:
     for i in range(3):
-      bpy.data.objects['Camera'].location[i] + = rand(args.camera_jitter)
+      bpy.data.objects['Camera'].location[i] += rand(args.camera_jitter)
 
   # Figure out the left, up, and behind directions along the plane and record
   # them in the scene structure
-  camera       = bpy.data.objects['Camera']
+  camera = bpy.data.objects['Camera']
   plane_normal = plane.data.vertices[0].normal
-  cam_behind   = camera.matrix_world.to_quaternion() * Vector((0, 0, -1))
-  cam_left     = camera.matrix_world.to_quaternion() * Vector((-1, 0, 0))
-  cam_up       = camera.matrix_world.to_quaternion() * Vector((0, 1, 0))
+  cam_behind = camera.matrix_world.to_quaternion() * Vector((0, 0, -1))
+  cam_left = camera.matrix_world.to_quaternion() * Vector((-1, 0, 0))
+  cam_up = camera.matrix_world.to_quaternion() * Vector((0, 1, 0))
   plane_behind = (cam_behind - cam_behind.project(plane_normal)).normalized()
-  plane_left   = (cam_left - cam_left.project(plane_normal)).normalized()
-  plane_up     = cam_up.project(plane_normal).normalized()
+  plane_left = (cam_left - cam_left.project(plane_normal)).normalized()
+  plane_up = cam_up.project(plane_normal).normalized()
 
   # Delete the plane; we only used it for normals anyway. The base scene file
   # contains the actual ground plane.
@@ -350,11 +351,11 @@ def render_scene(args,
 
   # Save all six axis-aligned directions in the scene struct
   scene_struct['directions']['behind'] = tuple(plane_behind)
-  scene_struct['directions']['front']  = tuple(-plane_behind)
-  scene_struct['directions']['left']   = tuple(plane_left)
-  scene_struct['directions']['right']  = tuple(-plane_left)
-  scene_struct['directions']['above']  = tuple(plane_up)
-  scene_struct['directions']['below']  = tuple(-plane_up)
+  scene_struct['directions']['front'] = tuple(-plane_behind)
+  scene_struct['directions']['left'] = tuple(plane_left)
+  scene_struct['directions']['right'] = tuple(-plane_left)
+  scene_struct['directions']['above'] = tuple(plane_up)
+  scene_struct['directions']['below'] = tuple(-plane_up)
 
   # Add random jitter to lamp positions
   if args.key_light_jitter > 0:
@@ -362,10 +363,10 @@ def render_scene(args,
       bpy.data.objects['Lamp_Key'].location[i] += rand(args.key_light_jitter)
   if args.back_light_jitter > 0:
     for i in range(3):
-      bpy.data.objects['Lamp_Back'].location[i] + = rand(args.back_light_jitter)
+      bpy.data.objects['Lamp_Back'].location[i] += rand(args.back_light_jitter)
   if args.fill_light_jitter > 0:
     for i in range(3):
-      bpy.data.objects['Lamp_Fill'].location[i] + = rand(args.fill_light_jitter)
+      bpy.data.objects['Lamp_Fill'].location[i] += rand(args.fill_light_jitter)
 
   # Now make some random objects
   blender_objects = add_objects(scene_struct, camera, objects)
