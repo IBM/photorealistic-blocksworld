@@ -42,7 +42,6 @@ def main(args):
         
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
-            assert(maxobj==len(scene["objects"]))
 
         imagefile = os.path.join(directory,"image",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
