@@ -1,8 +1,11 @@
 
 # Photo-Realistic Blocksworld
 
+NEWS: `.npz` binaries are available from https://github.com/IBM/photorealistic-blocksworld/releases .
+
 This is a repository modified from the [CLEVR dataset](https://github.com/facebookresearch/clevr-dataset-gen)
 for generating realistic visualizations of [blocksworld](https://en.wikipedia.org/wiki/Blocks_world).
+
 
 Setup:
 
