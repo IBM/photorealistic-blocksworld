@@ -65,25 +65,20 @@ def initialize_parser():
                       help="Directory where .blend files for materials are stored")
   
   # Settings for objects
-  parser.add_argument('--num-objects', default=4, type=int,
-                      help="The number of objects to place in each scene")
+  parser.add_argument('--min-objects', default=3, type=int,
+                      help="The minimum number of objects to place in each scene")
+  parser.add_argument('--max-objects', default=8, type=int,
+                      help="The maximum number of objects to place in each scene")
   
-  parser.add_argument('--max-margin', default=2.0, type=float,
-                      help="the maximum margin between the stacks")
-  parser.add_argument('--min-margin', default=1.5, type=float,
-                      help="the minimum margin between the stacks")
-  
-  parser.add_argument('--max-stacks', default=4, type=int,
-                      help="the maximum number of stacks.")
-  
-  parser.add_argument('--object-jitter', default=0.2, type=int,
-                      help="The magnitude of random jitter to add to the x,y position of each block.")
-  parser.add_argument('--initial-objects', default=None,
-                      help="The path for dumping the initial set of objects and stack positions."+
-                      "When specified but the file does not exist, create a new set of objects and dump a json to the file then terminate immediately."+
-                      "When specified and the file exists, it reads the json file and proceeds.")
-  parser.add_argument('--statistics', default=None,
-                      help="The path for dumping the statistics e.g. num.state/transistions.")
+  parser.add_argument('--min-dist', default=1.5, type=float,
+                      help="the minimum distance between objects")
+  parser.add_argument('--max-retries', default=50, type=int,
+                      help="The number of times to try placing an object before giving up and " +
+                      "re-placing all objects in the scene.")
+  parser.add_argument('--min-pixels-per-object', default=200, type=int,
+                      help="All objects will have at least this many visible pixels in the " +
+                      "final rendered images; this ensures that no objects are fully " +
+                      "occluded by other objects.")
   
   # Output settings
   parser.add_argument('--start-idx', default=0, type=int,
@@ -149,36 +144,6 @@ def initialize_parser():
                       help="Do not render images and count the number of possible states and transitions.")
   return parser
 
-def scene_hashkey(objects):
-    # Example objects
-    # [{'shape': 'SmoothCube_v2',
-    #   'location': (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
-    #       'bbox': (94.0, 143.0, 108.0, 159.0),
-    #       'color': [0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0],
-    #       'pixel_coords': (101, 151, 16.81483268737793),
-    #       'material': 'MyMetal',
-    #       'size': 0.31819805153394637,
-    #       'stackable': True,
-    #       'rotation': 122.37145376299921},
-    #       ...
-    # ]
-    key = tuple(
-      sorted([
-        (o['shape'],
-         o['location'],
-         tuple(o['color']),
-         o['size'],
-         o['material'],)
-        for o in objects]))
-    
-    # key = (('SmoothCube_v2',
-    #   (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
-    #   (94.0, 143.0, 108.0, 159.0),
-    #   (0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0),
-    #   'MyMetal',
-    #   0.31819805153394637),...
-    # )
-    return key
   
 def main(args):
   # Load the property file
@@ -217,154 +182,103 @@ def main(args):
   trans_img_template   = os.path.join(trans_img_dir,  template)
   trans_scene_template = os.path.join(trans_scene_dir,template)
   trans_blend_template = os.path.join(trans_blend_dir,template)
-  
-  # set up objects (except locations)
-  objects = initialize_objects(args)
-  stack_x = initialize_stack_x(args)
-  if args.initial_objects:
-    if os.path.isfile(args.initial_objects):
-      with open(args.initial_objects, 'r') as f:
-        init = json.load(f)
-        objects = init["objects"]
-        stack_x = init["stack_x"]
-    else:
-      with open(args.initial_objects, 'w') as f:
-        init = {"objects":objects, "stack_x":stack_x}
-        json.dump(init, f, indent=4)
 
-  print(objects,stack_x)
-  
-  states = -1
-  hashtable = dict()
-  for objects, stacks in enumerate_stack(objects, stack_x):
-    key = scene_hashkey(objects)
-    if key in hashtable:
-      continue
-    
-    states +=1
-    if 0 == (states%10000):
-      print(states)
-
-    img_path = img_template % states +".png"
-    scene_path = scene_template % states+".json"
-    blend_path = blend_template % states
-    
-    hashtable[key] = (img_path, scene_path, blend_path)
-
-    if not (args.start_idx <= states < args.start_idx + args.num_images ):
+  i = 0
+  while i < args.num_images:
+    if not (args.start_idx <= i < args.start_idx + args.num_images ):
       continue
     if args.dry_run:
       continue
+      
+    objects = initialize_objects(args)
+
+    img_path = img_template % i +".png"
+    scene_path = scene_template % i+".json"
+    blend_path = blend_template % i
     
-    render_scene(args,
-                 output_index=states,
+    result_ok = render_scene(args,
+                 output_index=i,
                  output_split=args.split,
                  output_image=img_path,
                  output_scene=scene_path,
                  # output_blendfile=blend_path,
                  objects=objects)
-  print(states+1,"states")
-  
-  states = -1
-  transitions = -1
-  hashset = set()
-  for objects_pre, stacks in enumerate_stack(objects, stack_x):
-    key = scene_hashkey(objects_pre)
-    if key in hashset:
-      continue
-    states +=1
-    hashset.add(key)
-    for objects_suc in enumerate_successor_stack(stacks, stack_x):
-      transitions+=1
-      if 0 == (transitions%10000):
-        print(transitions)
-      if not (args.start_idx <= states < args.start_idx + args.num_images ):
-        continue
-      prekey = scene_hashkey(objects_pre)
-      suckey = scene_hashkey(objects_suc)
+    
+    if result_ok:
+        i += 1
 
-      # check 1
-      count_pre = 0
-      for okey in prekey:
-        material = okey[4]
-        assert type(material) is str
-        # print(material)
-        if material == properties["materials"][0]:
-          count_pre += 1
-      count_suc = 0
-      for okey in suckey:
-        material = okey[4]
-        assert type(material) is str
-        if material == properties["materials"][0]:
-          count_suc += 1
-      if not ( count_suc == count_pre or count_suc == count_pre+1 or count_suc == count_pre-1):
-        print(transitions,"pre",scene_hashkey(objects_pre))
-        print(transitions,"suc",scene_hashkey(objects_suc))
-        raise "more than two materials change!"
 
-      # check 2
-      count_match = 0
-      for oprekey in prekey:
-        for osuckey in suckey:
-          if oprekey == osuckey:
-            count_match+=1
-      if not count_match == len(objects)-1:
-        print(transitions,"pre",scene_hashkey(objects_pre))
-        print(transitions,"suc",scene_hashkey(objects_suc))
-        raise "more than two objects change!"
-        
-      
-      
-      if args.dry_run:
-        # print(transitions,"pre",scene_hashkey(objects_pre))
-        # print(transitions,"suc",scene_hashkey(objects_suc))
-        continue
-      
-      # should be deterministic
-      i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
-      i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
+    
+def initialize_objects(args):
+    num_objects = random.randint(args.min_objects, args.max_objects)
+    
+    def dist(o1, o2):
+      x1,y1,_ = o1.location
+      x2,y2,_ = o2.location
+      dx      = x1-x2
+      dy      = y1-y2
+      return math.sqrt(dx * dx + dy * dy)
 
-      i_pre = os.path.join("..","image",os.path.basename(i_pre))
-      s_pre = os.path.join("..","scene",os.path.basename(s_pre))
-      b_pre = os.path.join("..","blend",os.path.basename(b_pre))
-      i_suc = os.path.join("..","image",os.path.basename(i_suc))
-      s_suc = os.path.join("..","scene",os.path.basename(s_suc))
-      b_suc = os.path.join("..","blend",os.path.basename(b_suc))
-      
-      i_pre2 = trans_img_template   % transitions+"_pre.png"
-      s_pre2 = trans_scene_template % transitions+"_pre.json"
-      b_pre2 = trans_blend_template % transitions+"_pre"
-      i_suc2 = trans_img_template   % transitions+"_suc.png"
-      s_suc2 = trans_scene_template % transitions+"_suc.json"
-      b_suc2 = trans_blend_template % transitions+"_suc"
-      
-      # link
-      import subprocess
-      subprocess.run(["ln", "-s", i_pre, i_pre2])
-      subprocess.run(["ln", "-s", s_pre, s_pre2])
-      # subprocess.run(["ln", "-s", b_pre, b_pre2])
-      subprocess.run(["ln", "-s", i_suc, i_suc2])
-      subprocess.run(["ln", "-s", s_suc, s_suc2])
-      # subprocess.run(["ln", "-s", b_suc, b_suc2])
-      
-  print(transitions+1,"transitions")
-  if args.statistics:
-    with open(args.statistics, 'w') as f:
-      stat = {"states":states+1, "transitions":transitions+1}
-      json.dump(stat, f, indent=4)
-  
+    def dist_good(o1, o2):
+        return dist(o1,o2) - o1.size - o2.size < args.min_dist
+            
+    objects = []
+    i             = 0
+    while i < num_objects:
+        num_tries = 0
+        success   = False
+        while num_tries < args.max_retries:
+            shape_name, shape_path = random_dict(properties['shapes'])
+            _, rgba                = random_dict(color_name_to_rgba)
+            _, r                   = random_dict(properties['sizes'])
+            rotation               = 360.0 * random.random()
+            # For cube, adjust the size a bit
+            if shape_name == 'cube':
+                r / = math.sqrt(2)
+
+            o1 = {
+                'shape': shape_path,
+                'size': r,
+                'stackable': properties['stackable'][shape_name] == 1,
+                'rotation': rotation,
+                'color':tuple(rgba),
+                'location': (random.uniform(-3, 3),
+                             random.uniform(-3, 3),
+                             r)
+            }
+
+            good = True
+            for o2 in objects:
+                if not dist_good(o1,o2):
+                    good = False
+                    break
+
+            if good:
+                objects.append(o1)
+                success = True
+                break
+
+            num_tries + = 1
+            
+        if not success:
+            objects = []
+            i       = 0
+            continue
+        i + = 1
+    
+    return objects
 
 def render_scene(args,
     output_index=0,
-    output_split='none',
-    output_image='render.png',
-    output_scene='render_json',
-    output_blendfile=None,
-    objects=[],
+    output_split     = 'none',
+    output_image     = 'render.png',
+    output_scene     = 'render_json',
+    output_blendfile = None,
+    objects          = [],
   ):
 
   # Load the main blendfile
-  bpy.ops.wm.open_mainfile(filepath=args.base_scene_blendfile)
+  bpy.ops.wm.open_mainfile(filepath = args.base_scene_blendfile)
 
   # Load materials
   utils.load_materials(args.material_dir)
@@ -373,26 +287,26 @@ def render_scene(args,
   # We use functionality specific to the CYCLES renderer so BLENDER_RENDER
   # cannot be used.
   render_args = bpy.context.scene.render
-  render_args.engine = "CYCLES"
-  render_args.filepath = output_image
-  render_args.resolution_x = args.width
-  render_args.resolution_y = args.height
+  render_args.engine                = "CYCLES"
+  render_args.filepath              = output_image
+  render_args.resolution_x          = args.width
+  render_args.resolution_y          = args.height
   render_args.resolution_percentage = 100
-  render_args.tile_x = args.render_tile_size
-  render_args.tile_y = args.render_tile_size
+  render_args.tile_x                = args.render_tile_size
+  render_args.tile_y                = args.render_tile_size
   if args.use_gpu == 1:
     # Blender changed the API for enabling CUDA at some point
     if bpy.app.version < (2, 78, 0):
       bpy.context.user_preferences.system.compute_device_type = 'CUDA'
       bpy.context.user_preferences.system.compute_device = 'CUDA_0'
     else:
-      cycles_prefs = bpy.context.user_preferences.addons['cycles'].preferences
+      cycles_prefs                     = bpy.context.user_preferences.addons['cycles'].preferences
       cycles_prefs.compute_device_type = 'CUDA'
 
   # Some CYCLES-specific stuff
-  bpy.data.worlds['World'].cycles.sample_as_light = True
-  bpy.context.scene.cycles.blur_glossy = 2.0
-  bpy.context.scene.cycles.samples = args.render_num_samples
+  bpy.data.worlds['World'].cycles.sample_as_light  = True
+  bpy.context.scene.cycles.blur_glossy             = 2.0
+  bpy.context.scene.cycles.samples                 = args.render_num_samples
   bpy.context.scene.cycles.transparent_min_bounces = args.render_min_bounces
   bpy.context.scene.cycles.transparent_max_bounces = args.render_max_bounces
   if args.use_gpu == 1:
@@ -408,8 +322,8 @@ def render_scene(args,
   }
 
   # Put a plane on the ground so we can compute cardinal directions
-  bpy.ops.mesh.primitive_plane_add(radius=5)
-  plane = bpy.context.object
+  bpy.ops.mesh.primitive_plane_add(radius = 5)
+  plane                                   = bpy.context.object
 
   def rand(L):
     return 2.0 * L * (random.random() - 0.5)
@@ -417,18 +331,18 @@ def render_scene(args,
   # Add random jitter to camera position
   if args.camera_jitter > 0:
     for i in range(3):
-      bpy.data.objects['Camera'].location[i] += rand(args.camera_jitter)
+      bpy.data.objects['Camera'].location[i] + = rand(args.camera_jitter)
 
   # Figure out the left, up, and behind directions along the plane and record
   # them in the scene structure
-  camera = bpy.data.objects['Camera']
+  camera       = bpy.data.objects['Camera']
   plane_normal = plane.data.vertices[0].normal
-  cam_behind = camera.matrix_world.to_quaternion() * Vector((0, 0, -1))
-  cam_left = camera.matrix_world.to_quaternion() * Vector((-1, 0, 0))
-  cam_up = camera.matrix_world.to_quaternion() * Vector((0, 1, 0))
+  cam_behind   = camera.matrix_world.to_quaternion() * Vector((0, 0, -1))
+  cam_left     = camera.matrix_world.to_quaternion() * Vector((-1, 0, 0))
+  cam_up       = camera.matrix_world.to_quaternion() * Vector((0, 1, 0))
   plane_behind = (cam_behind - cam_behind.project(plane_normal)).normalized()
-  plane_left = (cam_left - cam_left.project(plane_normal)).normalized()
-  plane_up = cam_up.project(plane_normal).normalized()
+  plane_left   = (cam_left - cam_left.project(plane_normal)).normalized()
+  plane_up     = cam_up.project(plane_normal).normalized()
 
   # Delete the plane; we only used it for normals anyway. The base scene file
   # contains the actual ground plane.
@@ -436,11 +350,11 @@ def render_scene(args,
 
   # Save all six axis-aligned directions in the scene struct
   scene_struct['directions']['behind'] = tuple(plane_behind)
-  scene_struct['directions']['front'] = tuple(-plane_behind)
-  scene_struct['directions']['left'] = tuple(plane_left)
-  scene_struct['directions']['right'] = tuple(-plane_left)
-  scene_struct['directions']['above'] = tuple(plane_up)
-  scene_struct['directions']['below'] = tuple(-plane_up)
+  scene_struct['directions']['front']  = tuple(-plane_behind)
+  scene_struct['directions']['left']   = tuple(plane_left)
+  scene_struct['directions']['right']  = tuple(-plane_left)
+  scene_struct['directions']['above']  = tuple(plane_up)
+  scene_struct['directions']['below']  = tuple(-plane_up)
 
   # Add random jitter to lamp positions
   if args.key_light_jitter > 0:
@@ -448,13 +362,20 @@ def render_scene(args,
       bpy.data.objects['Lamp_Key'].location[i] += rand(args.key_light_jitter)
   if args.back_light_jitter > 0:
     for i in range(3):
-      bpy.data.objects['Lamp_Back'].location[i] += rand(args.back_light_jitter)
+      bpy.data.objects['Lamp_Back'].location[i] + = rand(args.back_light_jitter)
   if args.fill_light_jitter > 0:
     for i in range(3):
-      bpy.data.objects['Lamp_Fill'].location[i] += rand(args.fill_light_jitter)
+      bpy.data.objects['Lamp_Fill'].location[i] + = rand(args.fill_light_jitter)
 
   # Now make some random objects
   blender_objects = add_objects(scene_struct, camera, objects)
+  
+  all_visible = check_visibility(blender_objects, args.min_pixels_per_object)
+  if not all_visible:
+    print('Some objects are occluded; replacing objects')
+    for obj in blender_objects:
+      utils.delete_object(obj)
+    return False
 
   # Render the scene and dump the scene data structure
   scene_struct['objects'] = objects
@@ -471,155 +392,17 @@ def render_scene(args,
 
   if output_blendfile is not None:
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)
+  
+  return True
 
 def random_dict(dict):
   return random.choice(list(dict.items()))
-
-def stack_height(stack):
-  z = 0
-  for obj in stack:
-    z += obj["size"]*2
-  return z
 
 def object_equal(o1, o2):
   return \
     o1["shape"]    == o2["shape"]    and \
     o1["size"]     == o2["size"]     and \
     o1["color"]    == o2["color"]
-
-def initialize_objects(args):
-
-  # adding objects
-  objects         = []
-  for i in range(args.num_objects):
-    while True:
-      shape_name, shape_path = random_dict(properties['shapes'])
-      _, rgba                = random_dict(color_name_to_rgba)
-      _, r                   = random_dict(properties['sizes'])
-      rotation               = 360.0 * random.random()
-      # For cube, adjust the size a bit
-      if shape_name == 'cube':
-        r /= math.sqrt(2)
-
-      obj = {
-        'shape': shape_path,
-        'size': r,
-        'stackable': properties['stackable'][shape_name] == 1,
-        'rotation': rotation,
-        'color':tuple(rgba),
-      }
-      ok = True
-      for o2 in objects:
-        if object_equal(obj, o2) or obj['color'] == o2['color']:
-          ok = False
-          break
-      if ok:
-        break
-    
-    objects.append(obj)
-  return objects
-
-def initialize_stack_x(args):
-  # compute the stack positions
-  stack_x = [0]
-  for i in range(args.max_stacks-1):
-    stack_x.append(stack_x[-1]+random.uniform(args.min_margin, args.max_margin))
-  center  = stack_x[-1] / 2
-  stack_x = [ x - center for x in stack_x ]
-  return stack_x
-
-def initialize_stacks(stack_x):
-  stacks = []
-  for _ in stack_x:
-    stacks.append([])
-  return stacks
-
-def update_locations(stacks, stack_x):
-  for stack, x_base in zip(stacks, stack_x):
-    tmp_stack = []
-    for obj in stack:
-      x = x_base
-      y = 0
-      z = stack_height(tmp_stack) + obj["size"]
-      obj["location"] = (x,y,z)
-      tmp_stack.append(obj)
-    
-def collect_objects(stacks):
-  objects = []
-  for stack in stacks:
-    objects.extend(stack)
-  return objects
-
-def enumerate_stack(objects, stack_x):
-  objects = copy(objects)
-  objects_tmp = [ o for o in objects ] # not the deep copy
-  stacks = initialize_stacks(stack_x)
-  sl = len(stacks)
-  
-  def rec(_objs):
-    ol = len(_objs)
-    if ol>0:
-      for o in range(ol):
-        obj = _objs.pop(o)
-        for s in range(sl):
-          stacks[s].append(obj)
-          for m in properties["materials"]:
-            obj["material"] = m
-            yield from rec(_objs)
-            del obj["material"]
-          stacks[s].pop()
-        _objs.insert(o,obj)
-    else:
-      update_locations(stacks,stack_x)
-      yield objects, stacks     # stacks holds pointers to objects
-  
-  yield from rec(objects_tmp)
-
-def action_move(stacks, stack_x):
-  nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
-  for i in nonempty_stacks:
-    different_stacks = [j for j,stack in enumerate(stacks) if j != i]
-    for j in different_stacks:
-      obj = stacks[i].pop()
-      stacks[j].append(obj)
-      update_locations(stacks,stack_x)
-      yield collect_objects(stacks)
-      stacks[j].pop()
-      stacks[i].append(obj)
-      update_locations(stacks,stack_x)
-      
-def action_change_material(stacks, stack_x):
-  nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
-  for i in nonempty_stacks:
-    material = stacks[i][-1]["material"]
-    tmp = copy(properties['materials'])
-    tmp.remove(material)
-    for new_material in tmp:
-      stacks[i][-1]["material"] = new_material
-      yield collect_objects(stacks)
-    stacks[i][-1]["material"] = material
-
-def action_remove(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
-  target_stacks  = [stack for stack in stacks if stack]
-  if target_stacks:
-    stack            = random.choice(target_stacks)
-    stack.pop()
-    return collect_objects(stacks)
-
-actions = [
-  action_move,
-  action_change_material,
-  # action_remove
-]
-
-def enumerate_successor_stack(stacks, stack_x):
-  stacks = copy(stacks)
-  for action in actions:
-    # print("selected action:",action)
-    yield from action(stacks, stack_x)
 
 def add_objects(scene_struct, camera, objects):
   """
