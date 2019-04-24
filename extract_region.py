@@ -16,7 +16,7 @@ def main(scenefile):
     # print(base,nameext,name,ext)
     assert(ext==".json")
     
-    imagefile_base = os.path.join("{}/../images/{}".format(base,name))
+    imagefile_base = os.path.join("{}/../image/{}".format(base,name))
     image = imageio.imread(imagefile_base+".png")
     # print(image.shape)
     
