@@ -34,19 +34,18 @@ submit="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 
 blender="blender -noaudio --background --python render_images.py -- \
       --output-dir      $prefix                   \
-      --render-num-samples 300                           \
-      --width 300                                        \
-      --height 200                                       \
-      --min-objects $min                                
-      --max-objects $max                                "
+      --width 300                                 \
+      --height 200                                \
+      --min-objects $min                          \
+      --max-objects $max                          "
 
 if $distributed
 then
-    parallel "$submit $blender $gpuflag --start-idx {} --num-images $num_images" ::: $(seq 0 $num_images $states)
+    parallel "$submit $blender $gpuflag --start-idx {} --num-images $num_images --render-num-samples 300" ::: $(seq 0 $num_images $states)
     echo "Run the following command when all jobs have finished:"
     echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
 else
-    $blender $gpuflag --num-images $num_images
+    $blender $gpuflag --num-images $num_images --render-num-samples 40
     ./extract_all_regions_binary.py --out $prefix.npz $prefix/
 fi
 
