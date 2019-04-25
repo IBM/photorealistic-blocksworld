@@ -11,6 +11,8 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
+parser.add_argument('--max-objects', default=8, type=int,
+                    help="The maximum number of objects to place in each scene")
 parser.add_argument('--resize', type=int, default=32,
                     help="the size of the image patch resized from the region originally extracted")
 
@@ -18,19 +20,19 @@ def main(args):
 
     directory = args.dir
     out       = args.out
-    resize   = args.resize
+    maxobj    = args.max_objects
+    resize    = args.resize
 
-    scenes=os.path.join(directory,"scene")
-    files = os.listdir(scenes)
+    scenes = os.path.join(directory,"scene")
+    files  = os.listdir(scenes)
     files.sort()
     filenum = len(files)
 
     with open(os.path.join(scenes,files[0]), 'r') as f:
-        scene = json.load(f)
-        maxobj = len(scene["objects"])
+        scene     = json.load(f)
         imagefile = os.path.join(directory,"image",scene["image_filename"])
-        image = imageio.imread(imagefile)[:,:,:3]
-        picsize = image.shape
+        image     = imageio.imread(imagefile)[:,:,:3]
+        picsize   = image.shape
 
     images = np.zeros((filenum, maxobj, resize, resize, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
