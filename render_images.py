@@ -368,12 +368,30 @@ def render_scene(args,
 
   # Now make some random objects
   blender_objects = add_objects(scene_struct, camera, objects)
+
+  def cleanup():
+    for obj in blender_objects:
+      utils.delete_object(obj)
+        
+  for obj in objects:
+      x1,y1,x2,y2 = obj["bbox"]
+      if x1<0 or args.width < x1:
+        cleanup()
+        return False
+      if x2<0 or args.width < x2:
+        cleanup()
+        return False
+      if y1<0 or args.height < y1:
+        cleanup()
+        return False
+      if y2<0 or args.height < y2:
+        cleanup()
+        return False
   
   all_visible = check_visibility(blender_objects, args.min_pixels_per_object)
   if not all_visible:
     print('Some objects are occluded; replacing objects')
-    for obj in blender_objects:
-      utils.delete_object(obj)
+    cleanup()
     return False
 
   # Render the scene and dump the scene data structure
