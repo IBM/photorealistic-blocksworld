@@ -36,6 +36,7 @@ def main(args):
 
     images = np.zeros((filenum, maxobj, resize, resize, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
+    bboxes[:,:,2:4] = 1
 
     # store states
     for i,scenefile in enumerate(files):
@@ -48,7 +49,7 @@ def main(args):
         imagefile = os.path.join(directory,"image",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
         assert(picsize==image.shape)
-
+        print(imagefile)
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
