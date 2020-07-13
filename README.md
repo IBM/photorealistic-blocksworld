@@ -12,7 +12,7 @@ Setup:
 ```
 sudo apt-get install blender parallel jq
 pip3 install --user imageio scikit-image
-echo $PWD >> ~/.local/lib/python3.5/site-packages/clevr.pth
+echo $PWD >> ~/.local/lib/python3.5/site-packages/clevr.pth # change the python version
 ```
 
 Example: `./test.sh`
