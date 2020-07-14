@@ -2,7 +2,7 @@
 
 # Render all scenes with a given number of objects and stacks.
 #
-# generate_all.sh [objs] [stacks] [distributed] [num_images]
+# generate_all.sh [objs] [stacks] [distributed] [num_images] [gpu]
 #
 #   objs:   specity the number of objects, default = 2
 # 
@@ -12,6 +12,9 @@
 # 
 #   num_images:  The number of images per job when distributed=true.
 #
+#   gpu:  if true, use the gpu. default : true.
+
+#
 # You can modity the "submit" variable in the source code to
 # customize the job submission commands for the job scheduler in your cluster.
 
@@ -19,8 +22,16 @@ objs=${1:-2}
 stacks=${2:-2}
 distributed=${3:-false}
 num_images=${4:-200}
+gpu=${4:-true}
+
 prefix="blocks-$objs-$stacks"
 proj=$(date +%Y%m%d%H%M)-render-$prefix
+use_gpu=""
+if $gpu
+then
+    use_gpu="--use-gpu 1"
+fi
+  
 
 submit="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 
@@ -42,10 +53,10 @@ transitions=$(jq .transitions $prefix-stat.json)
 
 if $distributed
 then
-    parallel "$submit $blender --use-gpu 1 --start-idx {} --num-images $num_images" ::: $(seq 0 $num_images $states)
+    parallel "$submit $blender $use_gpu --start-idx {} --num-images $num_images" ::: $(seq 0 $num_images $states)
     echo "Run the following command when all jobs have finished:"
     echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
 else
-    $blender --use-gpu 1
+    $blender $use_gpu
     ./extract_all_regions_binary.py --out $prefix.npz $prefix/
 fi
