@@ -1,6 +1,7 @@
 #!/bin/bash
 
-blender -noaudio --background --python render_images.py -- \
+blenderdir=$(echo blender-2.*/)
+$blenderdir/blender -noaudio --background --python render_images.py -- \
       --output-dir      example                         \
       --initial-objects exampl-init.json                \
       --statistics      exampl-stat.json                \

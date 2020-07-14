@@ -16,7 +16,15 @@ sudo apt-get install parallel jq
 conda env create -f environment.yml
 ```
 
-Example: `./test.sh`
+Install blender:
+
+```
+wget https://download.blender.org/release/Blender2.77/blender-2.77a-linux-glibc211-x86_64.tar.bz2
+tar xf blender-2.77a-linux-glibc211-x86_64.tar.bz2
+echo $PWD > $(echo blender*/2.*/python/lib/python*/site-packages/)clevr.pth
+```
+
+Example: Run `./test.sh`.
 
 For the original readme, see [README-clevr.md](README-clevr.md) .
 

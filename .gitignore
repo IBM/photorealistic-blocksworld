@@ -6,3 +6,4 @@ output/
 /*.json
 /*.npz
 blocks*/
+blender*

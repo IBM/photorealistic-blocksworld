@@ -3,7 +3,8 @@
 echo "this test will just render the first 5 images of 2 objs, 2 stacks blocksworld."
 read -n 1 -s -r -p "Press any key to continue"
 
-blender -noaudio --background --python render_images.py -- \
+blenderdir=$(echo blender-2.*/)
+$blenderdir/blender -noaudio --background --python render_images.py -- \
       --output-dir      output                          \
       --initial-objects output-init.json                \
       --statistics      output-stat.json                \
