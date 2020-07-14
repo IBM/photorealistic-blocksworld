@@ -42,6 +42,12 @@ env:
   # - URL=https://download.blender.org/release/Blender2.83/blender-2.83.1-linux64.tar.xz
   - URL=https://download.blender.org/release/Blender2.83/blender-2.83.2-linux64.tar.xz
 
+jobs:
+  allow_failures:
+    - env: URL=https://download.blender.org/release/Blender2.80/blender-2.80rc3-linux-glibc217-x86_64.tar.bz2
+    - env: URL=https://download.blender.org/release/Blender2.82/blender-2.82a-linux64.tar.xz
+    - env: URL=https://download.blender.org/release/Blender2.83/blender-2.83.2-linux64.tar.xz
+
 install:
   - pip install -r requirements.txt
   - "[ -f ~/download/$(basename $URL) ] || wget $URL -O ~/download/$(basename $URL)"
