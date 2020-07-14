@@ -1,5 +1,5 @@
 
-# Photo-Realistic Blocksworld
+# Photo-Realistic Blocksworld [![Build Status](https://travis-ci.org/IBM/photorealistic-blocksworld.svg?branch=master)](https://travis-ci.org/IBM/photorealistic-blocksworld)
 
 NEWS: `.npz` binaries are available from https://github.com/IBM/photorealistic-blocksworld/releases .
 
@@ -36,11 +36,23 @@ Note: I changed all keyword options from using underscores to using hyphens (e.g
 
 # Functionality
 
-`render_images.py` : Renders all possible states of the blocks world and dump the metadata (e.g. bounding boxes) in the corresponding json files.
++ `render_images.py` : 
+  
+  Renders all possible states of the blocks world and dump the metadata
+  (e.g. bounding boxes) in the corresponding json files.
+  This file runs under the python distribution included in the blender.
 
-`extract_region.py` : Extract each region that contains an object from an image and store them in png files. Takes a metadata json file as the input.
++ `extract_region.py` :
 
-`extract_all_regions_binary.py` : Extract the regions from the every images generated, resize them to 32x32 and store them in a `.npz` container along with the bounding box vector (x1,y1,x2,y2).
+  Extract each region that contains an object from an image and store them in
+  png files. Takes a metadata json file as the input.
+  This file runs in the conda environment.
+
++ `extract_all_regions_binary.py` :
+
+  Extract the regions from the every images generated, resize them to 32x32 and
+  store them in a `.npz` container along with the bounding box vector (x1,y1,x2,y2).
+  This file runs in the conda environment.
 
 # Running
 
