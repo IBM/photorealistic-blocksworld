@@ -1,0 +1,60 @@
+language: python
+
+addons:
+  apt:
+    packages:
+      - wget
+      - parallel
+      - jq
+
+python:
+  - "3.6"
+  # - "3.7"
+
+env:
+  # bundled with python 3.4, missing subprocess.run
+  # - URL=https://download.blender.org/release/Blender2.76/blender-2.76-linux-glibc211-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.76/blender-2.76a-linux-glibc211-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.76/blender-2.76b-linux-glibc211-x86_64.tar.bz2
+  # 
+  # - URL=https://download.blender.org/release/Blender2.77/blender-2.77-linux-glibc211-x86_64.tar.bz2
+  - URL=https://download.blender.org/release/Blender2.77/blender-2.77a-linux-glibc211-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78-linux-glibc211-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78-linux-glibc219-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78a-linux-glibc211-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78a-linux-glibc219-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78b-linux-glibc211-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78b-linux-glibc219-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.78/blender-2.78c-linux-glibc211-x86_64.tar.bz2
+  - URL=https://download.blender.org/release/Blender2.78/blender-2.78c-linux-glibc219-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.79/blender-2.79-linux-glibc219-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.79/blender-2.79a-linux-glibc219-x86_64.tar.bz2
+  - URL=https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.80/blender-2.80-linux-glibc217-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.80/blender-2.80rc1-linux-glibc217-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.80/blender-2.80rc2-linux-glibc217-x86_64.tar.bz2
+  - URL=https://download.blender.org/release/Blender2.80/blender-2.80rc3-linux-glibc217-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.81/blender-2.81-linux-glibc217-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.81/blender-2.81a-linux-glibc217-x86_64.tar.bz2
+  # - URL=https://download.blender.org/release/Blender2.82/blender-2.82-linux64.tar.xz
+  - URL=https://download.blender.org/release/Blender2.82/blender-2.82a-linux64.tar.xz
+  # - URL=https://download.blender.org/release/Blender2.83/blender-2.83.0-linux64.tar.xz
+  # - URL=https://download.blender.org/release/Blender2.83/blender-2.83.1-linux64.tar.xz
+  - URL=https://download.blender.org/release/Blender2.83/blender-2.83.2-linux64.tar.xz
+
+install:
+  - pip install -r requirements.txt
+  - "[ -f ~/download/$(basename $URL) ] || wget $URL -O ~/download/$(basename $URL)"
+  - "[ -d ~/download/$(basename $(basename $URL .tar.bz2) .tar.xz) ] || (cd ~/download/ ; tar xf $(basename $URL))"
+  - ln -s ~/download/blender*/ .
+  - echo $PWD > $(echo blender*/2.*/python/lib/python*/site-packages/)clevr.pth
+
+cache:
+  - pip
+  - directories:
+    - /home/travis/virtualenv
+    - /home/travis/download
+
+script:
+  - LD_LIBRARY_PATH=$(echo blender*/)lib/:$LD_LIBRARY_PATH ./generate_all.sh 2 2 false 200 false
+  
