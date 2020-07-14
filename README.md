@@ -3,6 +3,8 @@
 
 NEWS: `.npz` binaries are available from https://github.com/IBM/photorealistic-blocksworld/releases .
 
+NEWS: Now works on blender 2.80+
+
 This is a repository modified from the [CLEVR dataset](https://github.com/facebookresearch/clevr-dataset-gen)
 for generating realistic visualizations of [blocksworld](https://en.wikipedia.org/wiki/Blocks_world).
 
