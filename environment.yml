@@ -1,0 +1,7 @@
+
+name : prb
+dependencies:
+  - python=3
+  - pip
+  - pip:
+    - -r file:requirements.txt
