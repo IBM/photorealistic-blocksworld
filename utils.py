@@ -104,7 +104,13 @@ def add_object(object_dir, name, scale, loc, theta=0):
   bpy.data.objects[name].name = new_name
 
   # Set the new object as active, then rotate, scale, and translate it
-  bpy.context.scene.objects.active = bpy.data.objects[new_name]
+  o = bpy.data.objects[new_name]
+  if bpy.app.version < (2, 80, 0):
+    bpy.context.scene.objects.active = o
+  else:
+    o.select_set( state = True, view_layer = bpy.context.view_layer )
+    bpy.context.view_layer.objects.active = o
+
   bpy.context.object.rotation_euler[2] = theta
   bpy.ops.transform.resize(value=(scale, scale, scale))
   # modified from CLEVR: y-axis is 0, and blocks are stacked vertically
