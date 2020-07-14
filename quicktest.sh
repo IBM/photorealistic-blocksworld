@@ -1,6 +1,7 @@
 #!/bin/bash -x
 
-blender -noaudio \
+blenderdir=$(echo blender-2.*/)
+$blenderdir/blender -noaudio \
         --background --python render_images.py -- \
         --num-images 1 \
         --render-num-samples 10 \
