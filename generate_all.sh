@@ -22,7 +22,7 @@ objs=${1:-2}
 stacks=${2:-2}
 distributed=${3:-false}
 num_images=${4:-200}
-gpu=${4:-true}
+gpu=${5:-true}
 
 prefix="blocks-$objs-$stacks"
 proj=$(date +%Y%m%d%H%M)-render-$prefix
