@@ -23,8 +23,9 @@ stacks=${2:-2}
 distributed=${3:-false}
 num_images=${4:-200}
 gpu=${5:-true}
+suffix=$6
 
-prefix="blocks-$objs-$stacks"
+prefix="blocks-$objs-$stacks$suffix"
 proj=$(date +%Y%m%d%H%M)-render-$prefix
 use_gpu=""
 if $gpu
