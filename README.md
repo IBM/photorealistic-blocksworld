@@ -16,6 +16,7 @@ With anaconda,
 ```
 sudo apt-get install parallel jq
 conda env create -f environment.yml
+conda activate prb
 ```
 
 Install blender:
