@@ -57,6 +57,17 @@ Note: I changed all keyword options from using underscores to using hyphens (e.g
   store them in a `.npz` container along with the bounding box vector (x1,y1,x2,y2).
   This file runs in the conda environment.
 
++ `generate_all.sh` :
+
+  Orchestrate several scripts to generate the whole dataset.
+
++ `merge-npz.py` :
+  
+  Each run of `generate_all` will enumerate the entire states/transtions of a
+  particular blocksworld configuration.
+  You can generate several environments, each of which has the different block shape, color etc.
+  This script takes several result npz files of such runs and concatenate them into a single file.
+
 # Running
 
 To generate a small dataset with 2 blocks / 2 stacks:
@@ -75,6 +86,8 @@ You should customize the job submission command in `generate_all.sh` for your jo
 Once you get done, run
 
     ./generate_all.sh 5 3 true
+
+Further customization details are available in the comment section of the script.
 
 # Citation
 
