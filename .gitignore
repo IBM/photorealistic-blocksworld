@@ -7,3 +7,5 @@ output/
 /*.npz
 blocks*/
 blender*
+backup*/
+all/
