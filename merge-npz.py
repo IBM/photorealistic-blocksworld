@@ -18,11 +18,13 @@ _transitions = []
 with np.load(args.npzs[0]) as data:
     picsize = data['picsize']
 
+count = 0
 for npz in tqdm.tqdm(args.npzs):
     with np.load(npz) as data:
         _images.append(data["images"])
         _bboxes.append(data["bboxes"])
-        _transitions.append(data["transitions"])
+        _transitions.append(data["transitions"]+count)
+        count += len(data["images"])
 
 np.savez_compressed(args.out,
                     images=np.concatenate(_images,axis=0),
