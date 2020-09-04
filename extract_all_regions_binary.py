@@ -13,6 +13,8 @@ parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
 parser.add_argument('--resize', type=int, default=32,
                     help="the size of the image patch resized from the region originally extracted")
+parser.add_argument('--include-background', action='store_true',
+                    help="include the whole image as a global object. The object is inserted at the end.")
 
 def main(args):
 
@@ -32,8 +34,14 @@ def main(args):
         image = imageio.imread(imagefile)[:,:,:3]
         picsize = image.shape
 
+    if args.include_background:
+        maxobj += 1
+
     images = np.zeros((filenum, maxobj, resize, resize, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
+
+    if args.include_background:
+        bboxes[:,-1] = [0,0,picsize[0],picsize[1]]
 
     # store states
     for i,scenefile in enumerate(files):
@@ -47,6 +55,8 @@ def main(args):
         imagefile = os.path.join(directory,"image",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
         assert(picsize==image.shape)
+        if args.include_background:
+            images[i,-1] = skimage.transform.resize(image,(resize,resize,3),preserve_range=True)
 
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
