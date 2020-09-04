@@ -50,6 +50,10 @@ def main(args):
         
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
+
+        if args.include_background:
+            assert(maxobj==len(scene["objects"])+1)
+        else:
             assert(maxobj==len(scene["objects"]))
 
         imagefile = os.path.join(directory,"image",scene["image_filename"])
