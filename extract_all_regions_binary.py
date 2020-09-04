@@ -6,6 +6,7 @@ import imageio
 import os.path
 import skimage.transform
 import argparse
+import tqdm
 
 parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
@@ -44,9 +45,7 @@ def main(args):
         bboxes[:,-1] = [0,0,picsize[0],picsize[1]]
 
     # store states
-    for i,scenefile in enumerate(files):
-        if 0==(i%100):
-            print(i,"/",filenum)
+    for i,scenefile in tqdm.tqdm(enumerate(files)):
         
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
@@ -76,9 +75,7 @@ def main(args):
     filenum = len(files)
     
     transitions = np.zeros(filenum, dtype=np.uint32)
-    for i,scenefile in enumerate(files):
-        if 0==(i%100):
-            print(i,"/",filenum)
+    for i,scenefile in tqdm.tqdm(enumerate(files)):
         
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
