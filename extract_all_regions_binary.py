@@ -42,7 +42,9 @@ def main(args):
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
     if args.include_background:
-        bboxes[:,-1] = [0,0,picsize[0],picsize[1]]
+        # picsize = (200, 300, 3)
+        # [0,0,300,200] --- xmin,ymin,xmax,ymax
+        bboxes[:,-1] = [0,0,picsize[1],picsize[0]]
 
     # store states
     for i,scenefile in tqdm.tqdm(enumerate(files)):
