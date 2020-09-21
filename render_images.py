@@ -73,9 +73,6 @@ def initialize_parser():
   parser.add_argument('--min-margin', default=1.5, type=float,
                       help="the minimum margin between the stacks")
   
-  parser.add_argument('--max-stacks', default=4, type=int,
-                      help="the maximum number of stacks.")
-  
   parser.add_argument('--object-jitter', default=0.2, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
   parser.add_argument('--statistics', default=None,
