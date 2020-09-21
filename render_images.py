@@ -475,9 +475,8 @@ def stack_height(stack):
 
 def object_equal(o1, o2):
   return \
-    o1["shape"]    == o2["shape"]    and \
-    o1["size"]     == o2["size"]     and \
-    o1["color"]    == o2["color"]
+    (o1["shape"] == o2["shape"] and o1["size"] == o2["size"]) or \
+    (o1["color"] == o2["color"])
 
 def initialize_objects(args):
 
@@ -503,7 +502,7 @@ def initialize_objects(args):
       # assign colors -- all colors/property must be different
       ok = True
       for o2 in objects:
-        if object_equal(obj, o2) or obj['color'] == o2['color']:
+        if object_equal(obj, o2):
           ok = False
           break
       if ok:
