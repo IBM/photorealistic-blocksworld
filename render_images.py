@@ -88,10 +88,6 @@ def initialize_parser():
   
   parser.add_argument('--filename-prefix', default='CLEVR',
                       help="This prefix will be prepended to the rendered images and JSON scenes")
-  parser.add_argument('--split', default='new',
-                      help="Name of the split for which we are rendering. This will be added to " +
-                      "the names of rendered images, and will also be stored in the JSON " +
-                      "scene structure for each image.")
   parser.add_argument('--output-dir', default='output',
                       help="The directory where output will be stored. It will be " +
                       "created if it does not exist.")
@@ -182,9 +178,7 @@ def main(args):
       for name, rgb in properties['colors'].items()
     }
   
-  num_digits = 6
-  prefix = '%s_%s_' % (args.filename_prefix, args.split)
-  template = '%s%%0%dd' % (prefix, num_digits)
+  template = f"{args.filename_prefix}_%06d"
 
   img_dir         = os.path.join(args.output_dir,"image")
   scene_dir       = os.path.join(args.output_dir,"scene")
@@ -335,7 +329,6 @@ def main(args):
 
 def render_scene(args,
     output_index=0,
-    output_split='none',
     output_image='render.png',
     output_scene='render_json',
     output_blendfile=None,
@@ -379,7 +372,6 @@ def render_scene(args,
 
   # This will give ground-truth information about the scene and its objects
   scene_struct = {
-      'split': output_split,
       'image_index': output_index,
       'image_filename': os.path.basename(output_image),
       'objects': [],
