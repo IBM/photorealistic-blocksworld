@@ -9,6 +9,5 @@ $blenderdir/blender -noaudio --background --python render_images.py -- \
       --start-idx          10000                        \
       --width 800                                       \
       --height 600                                      \
-      --num-objects 7                                   \
-      --max-stacks  3
+      --num-objects 7
 

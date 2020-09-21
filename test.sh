@@ -12,8 +12,7 @@ $blenderdir/blender -noaudio --background --python render_images.py -- \
       --start-idx          0                            \
       --width 300                                       \
       --height 200                                      \
-      --num-objects 2                                   \
-      --max-stacks  2
+      --num-objects 2
 
 
 # ./extract_region.py output/scenes/CLEVR_new_000000_pre.json

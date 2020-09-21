@@ -19,13 +19,12 @@
 # customize the job submission commands for the job scheduler in your cluster.
 
 objs=${1:-2}
-stacks=${2:-2}
-distributed=${3:-false}
-num_images=${4:-200}
-gpu=${5:-true}
-suffix=$6
+distributed=${2:-false}
+num_images=${3:-200}
+gpu=${4:-true}
+suffix=$5
 
-prefix="blocks-$objs-$stacks$suffix"
+prefix="blocks-$objs$suffix"
 proj=$(date +%Y%m%d%H%M)-render-$prefix
 use_gpu=""
 if $gpu
@@ -43,8 +42,7 @@ blender="$blenderdir/blender -noaudio --background --python render_images.py -- 
       --render-num-samples 300                           \
       --width 300                                        \
       --height 200                                       \
-      --num-objects $objs                                \
-      --max-stacks $stacks                               "
+      --num-objects $objs                               "
 
 states=$(jq      .states      $prefix-stat.json)
 transitions=$(jq .transitions $prefix-stat.json)
