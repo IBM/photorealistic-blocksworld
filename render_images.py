@@ -363,8 +363,12 @@ class Block(object):
   def overlap(o1, o2):
     return (abs(o1.x - o2.x) < (o1.size + o2.size))
 
+  def stable_on(o1, o2):
+    return (abs(o1.x - o2.x) < o2.size)
+
   def above(o1, o2):
     return o1.overlap(o2) and (o1.z > o2.z)
+
 
 class State(object):
   "Randomly select a list of objects while avoiding duplicates"
@@ -415,6 +419,9 @@ class State(object):
       for oj in self.objects:
         if oi.overlap(oj):
           if not oj.stackable:
+            fail = True
+            break
+          if not oi.stable_on(oj):
             fail = True
             break
           oi.z = max(oi.z, oj.z + oj.size)
