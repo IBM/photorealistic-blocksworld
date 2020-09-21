@@ -134,6 +134,9 @@ def initialize_parser():
                       "while larger tile sizes may be optimal for GPU-based rendering.")
   return parser
 
+class Unstackable(Exception):
+  pass
+
 def main(args):
   # Load the property file
   global properties
@@ -164,21 +167,27 @@ def main(args):
     i_suc = (trans_img_template   % i)+"_suc.png"
     s_suc = (trans_scene_template % i)+"_suc.json"
 
-    state = State(args)
-    print(json.dumps(state.for_rendering(),indent=2))
+    while True:
+      try:
+        state = State(args)
+        print(json.dumps(state.for_rendering(),indent=2))
 
-    render_scene(args,
-                 output_image = i_pre,
-                 output_scene = s_pre,
-                 objects      = state.for_rendering())
+        render_scene(args,
+                     output_image = i_pre,
+                     output_scene = s_pre,
+                     objects      = state.for_rendering())
 
-    state.random_action()
-    print(json.dumps(state.for_rendering(),indent=2))
+        state.random_action()
+        print(json.dumps(state.for_rendering(),indent=2))
 
-    render_scene(args,
-                 output_image = i_suc,
-                 output_scene = s_suc,
-                 objects      = state.for_rendering())
+        render_scene(args,
+                     output_image = i_suc,
+                     output_scene = s_suc,
+                     objects      = state.for_rendering())
+        break
+      except Unstackable as e:
+        print(e)
+        pass
 
 def render_scene(args,
     output_image='render.png',
@@ -357,7 +366,6 @@ class Block(object):
   def above(o1, o2):
     return o1.overlap(o2) and (o1.z > o2.z)
 
-
 class State(object):
   "Randomly select a list of objects while avoiding duplicates"
 
@@ -398,12 +406,22 @@ class State(object):
     max_x = np.max(list(properties['sizes'].values())) * self.num_objects * 2
     max_abs_x = max_x / 2
 
-    oi.x = random.uniform(-max_abs_x, max_abs_x)
-    oi.z = 0
-    for oj in self.objects:
-      if oi.overlap(oj):
-        oi.z = max(oi.z, oj.z + oj.size)
-    oi.z += oi.size
+    trial = 0
+    fail = True
+    while fail and trial < 100:
+      fail = False
+      oi.x = random.uniform(-max_abs_x, max_abs_x)
+      oi.z = 0
+      for oj in self.objects:
+        if oi.overlap(oj):
+          if not oj.stackable:
+            fail = True
+            break
+          oi.z = max(oi.z, oj.z + oj.size)
+      oi.z += oi.size
+    if fail:
+      raise Unstackable("this state is not stackable")
+    pass
 
   def tops(self):
     """returns a list of objects on which nothing is on top of, i.e., it is the top object of the tower."""
