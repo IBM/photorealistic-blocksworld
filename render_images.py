@@ -138,8 +138,6 @@ def initialize_parser():
                       "quality of the rendered image but may affect the speed; CPU-based " +
                       "rendering may achieve better performance using smaller tile sizes " +
                       "while larger tile sizes may be optimal for GPU-based rendering.")
-  parser.add_argument('--dry-run', default=False, action='store_true',
-                      help="Do not render images and count the number of possible states and transitions.")
   return parser
 
 def scene_hashkey(objects):
