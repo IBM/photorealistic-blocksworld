@@ -23,7 +23,7 @@ def main(args):
     out       = args.out
     resize   = args.resize
 
-    scenes=os.path.join(directory,"scene")
+    scenes=os.path.join(directory,"scene_tr")
     files = os.listdir(scenes)
     files.sort()
     filenum = len(files)
@@ -31,7 +31,7 @@ def main(args):
     with open(os.path.join(scenes,files[0]), 'r') as f:
         scene = json.load(f)
         maxobj = len(scene["objects"])
-        imagefile = os.path.join(directory,"image",scene["image_filename"])
+        imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
         picsize = image.shape
 
@@ -57,7 +57,7 @@ def main(args):
         else:
             assert(maxobj==len(scene["objects"]))
 
-        imagefile = os.path.join(directory,"image",scene["image_filename"])
+        imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
         assert(picsize==image.shape)
         if args.include_background:
@@ -71,22 +71,7 @@ def main(args):
             bboxes[i,j] = bbox
     
     # store transitions
-    scenes=os.path.join(directory,"scene_tr")
-    files = os.listdir(scenes)
-    files.sort()
-    filenum = len(files)
-    
-    transitions = np.zeros(filenum, dtype=np.uint32)
-    for i,scenefile in tqdm.tqdm(enumerate(files)):
-        
-        with open(os.path.join(scenes,scenefile), 'r') as f:
-            scene = json.load(f)
-        
-        imagefile = scene["image_filename"]
-        # CLEVR_new_000000.png
-        name, _ = os.path.splitext(imagefile)
-        index = int(name.split("_")[2])
-        transitions[i] = index
+    transitions = np.arange(filenum, dtype=np.uint32)
     
     np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
 
