@@ -439,6 +439,7 @@ class State(object):
         if object_below == new_object_below:
           # is not shuffled!
           fail = True
+      trial += 1
 
     if fail:
       raise Unstackable("this state is not stackable")
