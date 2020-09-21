@@ -25,8 +25,8 @@ conda activate prb
 Install blender:
 
 ```
-wget https://download.blender.org/release/Blender2.77/blender-2.77a-linux-glibc211-x86_64.tar.bz2
-tar xf blender-2.77a-linux-glibc211-x86_64.tar.bz2
+wget https://download.blender.org/release/Blender2.83/blender-2.83.2-linux64.tar.xz
+tar xf blender-2.83.2-linux64.tar.xz
 echo $PWD > $(echo blender*/2.*/python/lib/python*/site-packages/)clevr.pth
 ```
 
