@@ -5,6 +5,9 @@ NEWS: `.npz` binaries are available from https://github.com/IBM/photorealistic-b
 
 NEWS: Now works on blender 2.80+
 
+NEWS: Random state generation (each state is randomized). Previously, a state is randomized at the beginning, but all states
+have the same objects (colors, shapes). Also, this version does not assume placing objects on a certain grid.
+
 This is a repository modified from the [CLEVR dataset](https://github.com/facebookresearch/clevr-dataset-gen)
 for generating realistic visualizations of [blocksworld](https://en.wikipedia.org/wiki/Blocks_world).
 
@@ -94,13 +97,9 @@ with np.load("path/to/blocks-3-3.npz") as data:
 
 # Running
 
-To generate a small dataset with 2 blocks / 2 stacks:
+To generate a dataset of 200 transitions with 3 blocks:
 
-    ./generate_all.sh 2 2
-
-To generate a medium-sized dataset with 3 blocks / 3 stacks:
-
-    ./generate_all.sh 3 3
+    ./generate_all.sh 3 200
 
 To generate a large dataset with 5 blocks / 3 stacks (>80k states=images),
 running it on a single computer would take a lot of time.
@@ -109,7 +108,7 @@ to the job scheduler.
 You should customize the job submission command in `generate_all.sh` for your job scheduler.
 Once you get done, run
 
-    ./generate_all.sh 5 3 true
+    ./generate_all.sh 5 1000 true 5
 
 Further customization details are available in the comment section of the script.
 
