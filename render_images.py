@@ -43,7 +43,6 @@ if INSIDE_BLENDER:
     sys.exit(1)
 
 properties         = None
-color_name_to_rgba = None
 
 def initialize_parser():
   parser = argparse.ArgumentParser()
@@ -83,7 +82,7 @@ def initialize_parser():
                       help="The index at which to start for numbering rendered images. Setting " +
                       "this to non-zero values allows you to distribute rendering across " +
                       "multiple machines and recombine the results later.")
-  parser.add_argument('--num-images', default=float('inf'), type=float,
+  parser.add_argument('--num-images', default=100, type=int,
                       help="The number of images to render")
   
   parser.add_argument('--filename-prefix', default='CLEVR',
@@ -136,199 +135,51 @@ def initialize_parser():
                       "while larger tile sizes may be optimal for GPU-based rendering.")
   return parser
 
-def scene_hashkey(objects):
-    # Example objects
-    # [{'shape': 'SmoothCube_v2',
-    #   'location': (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
-    #       'bbox': (94.0, 143.0, 108.0, 159.0),
-    #       'color': [0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0],
-    #       'pixel_coords': (101, 151, 16.81483268737793),
-    #       'material': 'MyMetal',
-    #       'size': 0.31819805153394637,
-    #       'stackable': True,
-    #       'rotation': 122.37145376299921},
-    #       ...
-    # ]
-    key = tuple(
-      sorted([
-        (o['shape'],
-         o['location'],
-         tuple(o['color']),
-         o['size'],
-         o['material'],)
-        for o in objects]))
-    
-    # key = (('SmoothCube_v2',
-    #   (-2.4983015843001413, 0.10880445879136152, 0.31819805153394637),
-    #   (94.0, 143.0, 108.0, 159.0),
-    #   (0.1607843137254902, 0.8156862745098039, 0.8156862745098039, 1.0),
-    #   'MyMetal',
-    #   0.31819805153394637),...
-    # )
-    return key
-  
 def main(args):
   # Load the property file
-  global properties, color_name_to_rgba
+  global properties
   with open(args.properties_json, 'r') as f:
     properties = json.load(f)
-    properties["materials"] = sorted(properties["materials"].values())
-    color_name_to_rgba = {
-      name : [float(c) / 255.0 for c in rgb] + [1.0] \
+    properties["colors"] = {
+      name : tuple(float(c) / 255.0 for c in rgb) + (1.0,) \
       for name, rgb in properties['colors'].items()
     }
   
-  template = f"{args.filename_prefix}_%06d"
-
-  img_dir         = os.path.join(args.output_dir,"image")
-  scene_dir       = os.path.join(args.output_dir,"scene")
-  blend_dir       = os.path.join(args.output_dir,"blend")
   trans_img_dir   = os.path.join(args.output_dir,"image_tr")
   trans_scene_dir = os.path.join(args.output_dir,"scene_tr")
-  trans_blend_dir = os.path.join(args.output_dir,"blend_tr")
 
-  for d in [img_dir,
-            scene_dir,
-            blend_dir,
-            trans_img_dir,
-            trans_scene_dir,
-            trans_blend_dir]:
+  for d in [trans_img_dir,
+            trans_scene_dir]:
     if not os.path.isdir(d):
       os.makedirs(d)
 
-  img_template         = os.path.join(img_dir,  template)
-  scene_template       = os.path.join(scene_dir,template)
-  blend_template       = os.path.join(blend_dir,template)
+  template = args.filename_prefix+"_%06d"
   trans_img_template   = os.path.join(trans_img_dir,  template)
   trans_scene_template = os.path.join(trans_scene_dir,template)
-  trans_blend_template = os.path.join(trans_blend_dir,template)
   
-  # set up objects (except locations)
-  objects = initialize_objects(args)
-  stack_x = initialize_stack_x(args)
+  for i in range(args.start_idx,
+                 args.start_idx+args.num_images):
 
-  states = -1
-  hashtable = dict()
-  for objects, stacks in enumerate_stack(objects, stack_x):
-    key = scene_hashkey(objects)
-    if key in hashtable:
-      continue
-    
-    states +=1
-    if 0 == (states%10000):
-      print(states)
+    i_pre = (trans_img_template   % i)+"_pre.png"
+    s_pre = (trans_scene_template % i)+"_pre.json"
+    i_suc = (trans_img_template   % i)+"_suc.png"
+    s_suc = (trans_scene_template % i)+"_suc.json"
 
-    img_path = img_template % states +".png"
-    scene_path = scene_template % states+".json"
-    blend_path = blend_template % states
-    
-    hashtable[key] = (img_path, scene_path, blend_path)
+    state = State(args)
 
-    if not (args.start_idx <= states < args.start_idx + args.num_images ):
-      continue
-    if args.dry_run:
-      continue
-    
     render_scene(args,
-                 output_index=states,
-                 output_split=args.split,
-                 output_image=img_path,
-                 output_scene=scene_path,
-                 # output_blendfile=blend_path,
-                 objects=objects)
-  print(states+1,"states")
-  
-  states = -1
-  transitions = -1
-  hashset = set()
-  for objects_pre, stacks in enumerate_stack(objects, stack_x):
-    key = scene_hashkey(objects_pre)
-    if key in hashset:
-      continue
-    states +=1
-    hashset.add(key)
-    for objects_suc in enumerate_successor_stack(stacks, stack_x):
-      transitions+=1
-      if 0 == (transitions%10000):
-        print(transitions)
-      if not (args.start_idx <= states < args.start_idx + args.num_images ):
-        continue
-      prekey = scene_hashkey(objects_pre)
-      suckey = scene_hashkey(objects_suc)
+                 output_image = i_pre,
+                 output_scene = s_pre,
+                 objects      = state.for_rendering())
 
-      # check 1
-      count_pre = 0
-      for okey in prekey:
-        material = okey[4]
-        assert type(material) is str
-        # print(material)
-        if material == properties["materials"][0]:
-          count_pre += 1
-      count_suc = 0
-      for okey in suckey:
-        material = okey[4]
-        assert type(material) is str
-        if material == properties["materials"][0]:
-          count_suc += 1
-      if not ( count_suc == count_pre or count_suc == count_pre+1 or count_suc == count_pre-1):
-        print(transitions,"pre",scene_hashkey(objects_pre))
-        print(transitions,"suc",scene_hashkey(objects_suc))
-        raise "more than two materials change!"
+    state.random_action()
 
-      # check 2
-      count_match = 0
-      for oprekey in prekey:
-        for osuckey in suckey:
-          if oprekey == osuckey:
-            count_match+=1
-      if not count_match == len(objects)-1:
-        print(transitions,"pre",scene_hashkey(objects_pre))
-        print(transitions,"suc",scene_hashkey(objects_suc))
-        raise "more than two objects change!"
-        
-      
-      
-      if args.dry_run:
-        # print(transitions,"pre",scene_hashkey(objects_pre))
-        # print(transitions,"suc",scene_hashkey(objects_suc))
-        continue
-      
-      # should be deterministic
-      i_pre, s_pre, b_pre = hashtable[scene_hashkey(objects_pre)]
-      i_suc, s_suc, b_suc = hashtable[scene_hashkey(objects_suc)]
-
-      i_pre = os.path.join("..","image",os.path.basename(i_pre))
-      s_pre = os.path.join("..","scene",os.path.basename(s_pre))
-      b_pre = os.path.join("..","blend",os.path.basename(b_pre))
-      i_suc = os.path.join("..","image",os.path.basename(i_suc))
-      s_suc = os.path.join("..","scene",os.path.basename(s_suc))
-      b_suc = os.path.join("..","blend",os.path.basename(b_suc))
-      
-      i_pre2 = trans_img_template   % transitions+"_pre.png"
-      s_pre2 = trans_scene_template % transitions+"_pre.json"
-      b_pre2 = trans_blend_template % transitions+"_pre"
-      i_suc2 = trans_img_template   % transitions+"_suc.png"
-      s_suc2 = trans_scene_template % transitions+"_suc.json"
-      b_suc2 = trans_blend_template % transitions+"_suc"
-      
-      # link
-      import subprocess
-      subprocess.run(["ln", "-s", i_pre, i_pre2])
-      subprocess.run(["ln", "-s", s_pre, s_pre2])
-      # subprocess.run(["ln", "-s", b_pre, b_pre2])
-      subprocess.run(["ln", "-s", i_suc, i_suc2])
-      subprocess.run(["ln", "-s", s_suc, s_suc2])
-      # subprocess.run(["ln", "-s", b_suc, b_suc2])
-      
-  print(transitions+1,"transitions")
-  if args.statistics:
-    with open(args.statistics, 'w') as f:
-      stat = {"states":states+1, "transitions":transitions+1}
-      json.dump(stat, f, indent=4)
-  
+    render_scene(args,
+                 output_image = i_suc,
+                 output_scene = s_suc,
+                 objects      = state.for_rendering())
 
 def render_scene(args,
-    output_index=0,
     output_image='render.png',
     output_scene='render_json',
     output_blendfile=None,
@@ -372,7 +223,6 @@ def render_scene(args,
 
   # This will give ground-truth information about the scene and its objects
   scene_struct = {
-      'image_index': output_index,
       'image_filename': os.path.basename(output_image),
       'objects': [],
       'directions': {},
