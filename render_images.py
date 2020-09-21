@@ -194,6 +194,7 @@ def render_scene(args,
     output_scene='render_json',
     output_blendfile=None,
     objects=[],
+    **kwargs
   ):
 
   # Load the main blendfile
@@ -237,6 +238,7 @@ def render_scene(args,
       'objects': [],
       'directions': {},
   }
+  scene_struct.update(kwargs)
 
   if bpy.app.version < (2, 80, 0):
     bpy.ops.mesh.primitive_plane_add(radius=5)
