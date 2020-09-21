@@ -10,6 +10,7 @@ import math, sys, random, argparse, json, os, tempfile
 from datetime import datetime as dt
 from collections import Counter
 from copy import deepcopy as copy
+import numpy as np
   
 """
 Renders random scenes using Blender, each with with a random number of objects;
@@ -69,11 +70,6 @@ def initialize_parser():
   # Settings for objects
   parser.add_argument('--num-objects', default=4, type=int,
                       help="The number of objects to place in each scene")
-  
-  parser.add_argument('--max-margin', default=2.0, type=float,
-                      help="the maximum margin between the stacks")
-  parser.add_argument('--min-margin', default=1.5, type=float,
-                      help="the minimum margin between the stacks")
   
   parser.add_argument('--object-jitter', default=0.2, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
@@ -169,6 +165,7 @@ def main(args):
     s_suc = (trans_scene_template % i)+"_suc.json"
 
     state = State(args)
+    print(json.dumps(state.for_rendering(),indent=2))
 
     render_scene(args,
                  output_image = i_pre,
@@ -176,6 +173,7 @@ def main(args):
                  objects      = state.for_rendering())
 
     state.random_action()
+    print(json.dumps(state.for_rendering(),indent=2))
 
     render_scene(args,
                  output_image = i_suc,
@@ -312,145 +310,135 @@ def stack_height(stack):
     z += obj["size"]*2
   return z
 
-def object_equal(o1, o2):
-  return \
-    (o1["shape"] == o2["shape"] and o1["size"] == o2["size"]) or \
-    (o1["color"] == o2["color"])
 
-def initialize_objects(args):
+class Block(object):
+  def __init__(self):
+    shape_name, self.shape = random_dict(properties['shapes'])
+    _, self.color          = random_dict(properties['colors'])
+    _, self.size           = random_dict(properties['sizes'])
+    _, self.material       = random_dict(properties['materials'])
+    self.rotation          = 360.0 * random.random()
+    self.stackable         = properties['stackable'][shape_name] == 1
+    self.location          = [0,0,0]
+    pass
 
-  # adding objects
-  objects         = []
-  for i in range(args.num_objects):
-    while True:
-      shape_name, shape_path = random_dict(properties['shapes'])
-      _, rgba                = random_dict(color_name_to_rgba)
-      _, r                   = random_dict(properties['sizes'])
-      rotation               = 360.0 * random.random()
-      # For cube, adjust the size a bit
-      if shape_name == 'cube':
-        r /= math.sqrt(2)
+  @property
+  def x(self):
+    return self.location[0]
 
-      obj = {
-        'shape': shape_path,
-        'size': r,
-        'stackable': properties['stackable'][shape_name] == 1,
-        'rotation': rotation,
-        'color':tuple(rgba),
-      }
-      # assign colors -- all colors/property must be different
-      ok = True
-      for o2 in objects:
-        if object_equal(obj, o2):
-          ok = False
+  @property
+  def y(self):
+    return self.location[1]
+
+  @property
+  def z(self):
+    return self.location[2]
+
+  @x.setter
+  def x(self,newvalue):
+    self.location[0] = newvalue
+
+  @y.setter
+  def y(self,newvalue):
+    self.location[1] = newvalue
+        
+  @z.setter
+  def z(self,newvalue):
+    self.location[2] = newvalue
+
+  def __eq__(o1,o2):
+    return \
+      (o1.shape == o2.shape and o1.size == o2.size) or \
+      (o1.color == o2.color)
+
+  def overlap(o1, o2):
+    return (abs(o1.x - o2.x) < (o1.size + o2.size))
+
+  def above(o1, o2):
+    return o1.overlap(o2) and (o1.z > o2.z)
+
+
+class State(object):
+  "Randomly select a list of objects while avoiding duplicates"
+
+  def __init__(self,args):
+    objects         = []
+    for i in range(args.num_objects):
+      while True:
+        obj = Block()
+        ok = True
+        for o2 in objects:
+          if obj == o2:
+            ok = False
+            break
+        if ok:
           break
-      if ok:
-        break
-    
-    objects.append(obj)
-  return objects
+      objects.append(obj)
 
-def initialize_stack_x(args):
-  # compute the stack positions
-  stack_x = [0]
-  for i in range(args.max_stacks-1):
-    stack_x.append(stack_x[-1]+random.uniform(args.min_margin, args.max_margin))
-  center  = stack_x[-1] / 2
-  stack_x = [ x - center for x in stack_x ]
-  return stack_x
+    self.num_objects = args.num_objects
+    self.objects = objects
+    self.shuffle()
+    pass
 
-def initialize_stacks(stack_x):
-  stacks = []
-  for _ in stack_x:
-    stacks.append([])
-  return stacks
+  def for_rendering(self):
+    return [ vars(o) for o in self.objects ]
 
-def update_locations(stacks, stack_x):
-  for stack, x_base in zip(stacks, stack_x):
-    tmp_stack = []
-    for obj in stack:
-      x = x_base
-      y = 0
-      z = stack_height(tmp_stack) + obj["size"]
-      obj["location"] = (x,y,z)
-      tmp_stack.append(obj)
-    
-def collect_objects(stacks):
-  objects = []
-  for stack in stacks:
-    objects.extend(stack)
-  return objects
+  def shuffle(self):
+    """destructively modify the list of objects using shuffle1."""
+    objs = self.objects.copy()
+    self.objects.clear()
+    for oi in objs:
+      self.shuffle1(oi)
+      self.objects.append(oi)
 
-def enumerate_stack(objects, stack_x):
-  objects = copy(objects)
-  objects_tmp = [ o for o in objects ] # not the deep copy
-  stacks = initialize_stacks(stack_x)
-  sl = len(stacks)
-  
-  def rec(_objs):
-    ol = len(_objs)
-    if ol>0:
-      for o in range(ol):
-        obj = _objs.pop(o)
-        for s in range(sl):
-          stacks[s].append(obj)
-          for m in properties["materials"]:
-            obj["material"] = m
-            yield from rec(_objs)
-            del obj["material"]
-          stacks[s].pop()
-        _objs.insert(o,obj)
-    else:
-      update_locations(stacks,stack_x)
-      yield objects, stacks     # stacks holds pointers to objects
-  
-  yield from rec(objects_tmp)
+  def shuffle1(self,oi):
+    """destructively modify an object by choosing a random x position and put it on top of existing objects.
+ oi itself is not inserted to the list of objects."""
+    # note: if a cube is rotated by 45degree, it should consume 1.41 times the size
+    max_x = np.max(list(properties['sizes'].values())) * self.num_objects * 2
+    max_abs_x = max_x / 2
 
-def action_move(stacks, stack_x):
-  nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
-  for i in nonempty_stacks:
-    different_stacks = [j for j,stack in enumerate(stacks) if j != i]
-    for j in different_stacks:
-      obj = stacks[i].pop()
-      stacks[j].append(obj)
-      update_locations(stacks,stack_x)
-      yield collect_objects(stacks)
-      stacks[j].pop()
-      stacks[i].append(obj)
-      update_locations(stacks,stack_x)
-      
-def action_change_material(stacks, stack_x):
-  nonempty_stacks  = [i for i,stack in enumerate(stacks) if stack]
-  for i in nonempty_stacks:
-    material = stacks[i][-1]["material"]
-    tmp = copy(properties['materials'])
-    tmp.remove(material)
-    for new_material in tmp:
-      stacks[i][-1]["material"] = new_material
-      yield collect_objects(stacks)
-    stacks[i][-1]["material"] = material
+    oi.x = random.uniform(-max_abs_x, max_abs_x)
+    oi.z = 0
+    for oj in self.objects:
+      if oi.overlap(oj):
+        oi.z = max(oi.z, oj.z + oj.size)
+    oi.z += oi.size
 
-def action_remove(stacks, stack_x):
-  import copy
-  stacks = copy.deepcopy(stacks)
-  
-  target_stacks  = [stack for stack in stacks if stack]
-  if target_stacks:
-    stack            = random.choice(target_stacks)
-    stack.pop()
-    return collect_objects(stacks)
+  def tops(self):
+    """returns a list of objects on which nothing is on top of, i.e., it is the top object of the tower."""
+    tops = []
+    for o1 in self.objects:
+      top = True
+      for o2 in self.objects:
+        if o1 == o2:
+          continue
+        if o2.above(o1):
+          top = False
+          break
+      if top:
+        tops.append(o1)
+    return tops
 
-actions = [
-  action_move,
-  action_change_material,
-  # action_remove
-]
+  def random_action(self):
+    method = random.choice([self.action_move,self.action_change_material])
+    method()
+    pass
 
-def enumerate_successor_stack(stacks, stack_x):
-  stacks = copy(stacks)
-  for action in actions:
-    # print("selected action:",action)
-    yield from action(stacks, stack_x)
+  def action_move(self):
+    o = random.choice(self.tops())
+    self.objects.remove(o)
+    self.shuffle1(o)
+    self.objects.append(o)
+    pass
+
+  def action_change_material(self):
+    o = random.choice(self.tops())
+    tmp = list(properties['materials'].values())
+    tmp.remove(o.material)
+    o.material = random.choice(tmp)
+    pass
+
 
 def add_objects(scene_struct, camera, objects):
   """
@@ -470,7 +458,6 @@ def add_objects(scene_struct, camera, objects):
     utils.add_material(obj["material"], Color=obj["color"])
     obj["pixel_coords"] = utils.get_camera_coords(camera, bobj.location)
 
-    import numpy as np
     loc = np.array(bobj.location)
     dim = np.array(bobj.dimensions)
     half = dim / 2
