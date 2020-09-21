@@ -42,7 +42,10 @@ if INSIDE_BLENDER:
     print("$VERSION is your Blender version (such as 2.78).")
     sys.exit(1)
 
-properties         = None
+properties         = {}
+def random_dict(dict):
+  return random.choice(list(dict.items()))
+
 
 def initialize_parser():
   parser = argparse.ArgumentParser()
@@ -301,8 +304,7 @@ def render_scene(args,
   if output_blendfile is not None:
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)
 
-def random_dict(dict):
-  return random.choice(list(dict.items()))
+
 
 def stack_height(stack):
   z = 0
