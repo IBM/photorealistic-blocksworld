@@ -6,7 +6,6 @@ read -n 1 -s -r -p "Press any key to continue"
 blenderdir=$(echo blender-2.*/)
 $blenderdir/blender -noaudio --background --python render_images.py -- \
       --output-dir      output                          \
-      --statistics      output-stat.json                \
       --render-num-samples 50                           \
       --num-images         5                            \
       --start-idx          0                            \

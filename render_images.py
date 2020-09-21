@@ -73,8 +73,6 @@ def initialize_parser():
   
   parser.add_argument('--object-jitter', default=0.2, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
-  parser.add_argument('--statistics', default=None,
-                      help="The path for dumping the statistics e.g. num.state/transistions.")
   
   # Output settings
   parser.add_argument('--start-idx', default=0, type=int,
