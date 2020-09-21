@@ -39,15 +39,12 @@ submit="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 blenderdir=$(echo blender-2.*/)
 blender="$blenderdir/blender -noaudio --background --python render_images.py -- \
       --output-dir      $prefix                   \
-      --initial-objects $prefix-init.json                \
       --statistics      $prefix-stat.json                \
       --render-num-samples 300                           \
       --width 300                                        \
       --height 200                                       \
       --num-objects $objs                                \
       --max-stacks $stacks                               "
-
-$blender --dry-run || exit 1      # necessary for init-o-s.json
 
 states=$(jq      .states      $prefix-stat.json)
 transitions=$(jq .transitions $prefix-stat.json)
