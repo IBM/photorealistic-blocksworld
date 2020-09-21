@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # Render all scenes with a given number of objects and stacks.
 #
@@ -60,7 +60,7 @@ export SHELL=/bin/bash
 if $distributed
 then
     num_images_per_job=$((num_images/num_jobs))
-    parallel --dry-run "$submit job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $num_images)
+    parallel "$submit job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $num_images)
     echo "Run the following command when all jobs have finished:"
     echo "./merge-npz.py --out $dir.npz $dir/*.npz"
 else
