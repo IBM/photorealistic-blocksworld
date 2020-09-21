@@ -6,12 +6,12 @@
 #
 #   objs:   specity the number of objects, default = 2
 # 
-#   stacks: specity the number of stacks,  default = 2
-# 
+#   num_images:  The number of images to be rendered in total.
+#
 #   distributed: Whether to split the jobs and run the rendering in parallel. true|false. default = false
 # 
-#   num_images:  The number of images per job when distributed=true.
-#
+#   num_jobs: how many jobs to use when distributed.
+# 
 #   gpu:  if true, use the gpu. default : true.
 
 #
@@ -19,10 +19,11 @@
 # customize the job submission commands for the job scheduler in your cluster.
 
 objs=${1:-2}
-distributed=${2:-false}
-num_images=${3:-200}
-gpu=${4:-true}
-suffix=$5
+num_images=${2:-200}
+distributed=${3:-false}
+num_jobs=${4:-1}
+gpu=${5:-true}
+suffix=$6
 
 prefix="blocks-$objs$suffix"
 proj=$(date +%Y%m%d%H%M)-render-$prefix
@@ -45,10 +46,11 @@ blender="$blenderdir/blender -noaudio --background --python render_images.py -- 
 
 if $distributed
 then
-    parallel "$submit $blender $use_gpu --start-idx {} --num-images $num_images" ::: $(seq 0 $num_images $states)
+    num_images_per_job=$((num_images/num_jobs))
+    parallel "$submit $blender $use_gpu --start-idx {} --num-images $num_images_per_job" ::: $(seq 0 $num_images_per_job $num_images)
     echo "Run the following command when all jobs have finished:"
     echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
 else
-    $blender $use_gpu
+    $blender $use_gpu --num-images $num_images
     ./extract_all_regions_binary.py --out $prefix.npz $prefix/
 fi
