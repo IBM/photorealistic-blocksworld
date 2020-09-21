@@ -516,6 +516,7 @@ def initialize_objects(args):
         'rotation': rotation,
         'color':tuple(rgba),
       }
+      # assign colors -- all colors/property must be different
       ok = True
       for o2 in objects:
         if object_equal(obj, o2) or obj['color'] == o2['color']:
