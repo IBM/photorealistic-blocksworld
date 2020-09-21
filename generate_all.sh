@@ -18,39 +18,51 @@
 # You can modity the "submit" variable in the source code to
 # customize the job submission commands for the job scheduler in your cluster.
 
-objs=${1:-2}
-num_images=${2:-200}
-distributed=${3:-false}
-num_jobs=${4:-1}
-gpu=${5:-true}
-suffix=$6
+export objs=${1:-2}
+export num_images=${2:-200}
+export distributed=${3:-false}
+export num_jobs=${4:-1}
+export gpu=${5:-true}
+export suffix=$6
 
-prefix="blocks-$objs$suffix"
-proj=$(date +%Y%m%d%H%M)-render-$prefix
-use_gpu=""
+export dir="blocks-$objs$suffix"
+export proj=$(date +%Y%m%d%H%M)-render-$dir
+export use_gpu=""
 if $gpu
 then
-    use_gpu="--use-gpu 1"
+    export use_gpu="--use-gpu 1"
 fi
   
 
 submit="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
 
-blenderdir=$(echo blender-2.*/)
-blender="$blenderdir/blender -noaudio --background --python render_images.py -- \
-      --output-dir      $prefix                   \
-      --render-num-samples 300                           \
-      --width 300                                        \
-      --height 200                                       \
-      --num-objects $objs                               "
+job (){
+    output_dir=$1
+    start_idx=$2
+    num_images=$3
+    blenderdir=$(echo blender-2.*/)
+    $blenderdir/blender -noaudio --background --python render_images.py -- \
+                        --render-num-samples 300 \
+                        --width 300              \
+                        --height 200             \
+                        --num-objects $objs      \
+                        $use_gpu                 \
+                        --output-dir $output_dir \
+                        --start-idx $start_idx   \
+                        --num-images $num_images
+    ./extract_all_regions_binary.py --out $output_dir.npz $output_dir
+}
+
+export -f job
+# for parallel to recognize the shell function
+export SHELL=/bin/bash
 
 if $distributed
 then
     num_images_per_job=$((num_images/num_jobs))
-    parallel "$submit $blender $use_gpu --start-idx {} --num-images $num_images_per_job" ::: $(seq 0 $num_images_per_job $num_images)
+    parallel --dry-run "$submit job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $num_images)
     echo "Run the following command when all jobs have finished:"
-    echo "./extract_all_regions_binary.py --out $prefix.npz $prefix/"
+    echo "./merge-npz.py --out $dir.npz $dir/*.npz"
 else
-    $blender $use_gpu --num-images $num_images
-    ./extract_all_regions_binary.py --out $prefix.npz $prefix/
+    job $dir 0 $num_images
 fi
