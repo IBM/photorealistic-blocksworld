@@ -183,7 +183,8 @@ def main(args):
         render_scene(args,
                      output_image = i_suc,
                      output_scene = s_suc,
-                     objects      = state.for_rendering())
+                     objects      = state.for_rendering(),
+                     action       = state.last_action)
         break
       except Unstackable as e:
         print(e)
@@ -450,6 +451,8 @@ class State(object):
   def random_action(self):
     method = random.choice([self.action_move,self.action_change_material])
     method()
+    # storing the name of the action. This is visible in the json file
+    self.last_action = method.__name__
     pass
 
   def action_move(self):
