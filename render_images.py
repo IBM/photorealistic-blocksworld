@@ -357,6 +357,10 @@ class Block(object):
     self.location[2] = newvalue
 
   def __eq__(o1,o2):
+    if o1 is None:
+      return False
+    if o2 is None:
+      return False
     return \
       (o1.shape == o2.shape and o1.size == o2.size) or \
       (o1.color == o2.color)
@@ -404,12 +408,15 @@ class State(object):
       self.shuffle1(oi)
       self.objects.append(oi)
 
-  def shuffle1(self,oi):
+  def shuffle1(self,oi,force_change=False):
     """destructively modify an object by choosing a random x position and put it on top of existing objects.
  oi itself is not inserted to the list of objects."""
     # note: if a cube is rotated by 45degree, it should consume 1.41 times the size
     max_x = np.max(list(properties['sizes'].values())) * self.num_objects * 2
     max_abs_x = max_x / 2
+
+    if force_change:
+      object_below = self.object_just_below(oi)
 
     trial = 0
     fail = True
@@ -427,6 +434,12 @@ class State(object):
             break
           oi.z = max(oi.z, oj.z + oj.size)
       oi.z += oi.size
+      if force_change:
+        new_object_below = self.object_just_below(oi)
+        if object_below == new_object_below:
+          # is not shuffled!
+          fail = True
+
     if fail:
       raise Unstackable("this state is not stackable")
     pass
@@ -446,6 +459,24 @@ class State(object):
         tops.append(o1)
     return tops
 
+  def objects_below(self,o):
+    results = []
+    for other in self.objects:
+      if o != other and o.above(other):
+        results.append(other)
+    return results
+
+  def object_just_below(self,o):
+    objects_below = self.objects_below(o)
+    if len(objects_below) == 0:
+      return None
+    else:
+      result = objects_below[0]
+      for other in objects_below[1:]:
+        if result.z < other.z:
+          result = other
+      return result
+
   def random_action(self):
     method = random.choice([self.action_move,self.action_change_material])
     method()
@@ -456,7 +487,7 @@ class State(object):
   def action_move(self):
     o = random.choice(self.tops())
     self.objects.remove(o)
-    self.shuffle1(o)
+    self.shuffle1(o,force_change=True)
     self.objects.append(o)
     pass
 
