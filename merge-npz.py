@@ -21,10 +21,15 @@ with np.load(args.npzs[0]) as data:
 count = 0
 for npz in tqdm.tqdm(args.npzs):
     with np.load(npz) as data:
-        _images.append(data["images"])
-        _bboxes.append(data["bboxes"])
-        _transitions.append(data["transitions"]+count)
-        count += len(data["images"])
+        l = len(data["images"])
+        if (l % 2) != 0:
+            print(f"This run is terminated prematurely! number of images == {l}")
+            l -= 1
+
+        _images.append(data["images"][:l])
+        _bboxes.append(data["bboxes"][:l])
+        _transitions.append(data["transitions"][:l]+count)
+        count += l
 
 np.savez_compressed(args.out,
                     images=np.concatenate(_images,axis=0),
