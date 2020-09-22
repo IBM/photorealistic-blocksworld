@@ -70,6 +70,9 @@ def initialize_parser():
   # Settings for objects
   parser.add_argument('--num-objects', default=4, type=int,
                       help="The number of objects to place in each scene")
+
+  parser.add_argument('--table-size', default=6, type=int,
+                      help="The approximate table size relative to the large object size * 1.5.")
   
   parser.add_argument('--object-jitter', default=0.2, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
@@ -392,7 +395,7 @@ class State(object):
           break
       objects.append(obj)
 
-    self.num_objects = args.num_objects
+    self.table_size = args.table_size
     self.objects = objects
     self.shuffle()
     pass
@@ -412,7 +415,7 @@ class State(object):
     """destructively modify an object by choosing a random x position and put it on top of existing objects.
  oi itself is not inserted to the list of objects."""
     # note: if a cube is rotated by 45degree, it should consume 1.41 times the size
-    max_x = np.max(list(properties['sizes'].values())) * self.num_objects * 2
+    max_x = np.max(list(properties['sizes'].values())) * self.table_size * 2
     max_abs_x = max_x / 2
 
     if force_change:
