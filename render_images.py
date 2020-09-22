@@ -479,7 +479,7 @@ class State(object):
       return result
 
   def random_action(self):
-    method = random.choice([self.action_move,self.action_change_material])
+    method = random.choice([self.action_move])
     method()
     # storing the name of the action. This is visible in the json file
     self.last_action = method.__name__
