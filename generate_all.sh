@@ -18,7 +18,7 @@
 # You can modity the "submit" variable in the source code to
 # customize the job submission commands for the job scheduler in your cluster.
 
-export objs=${1:-2}
+export objs=${1:-3}
 export num_images=${2:-200}
 export distributed=${3:-false}
 export num_jobs=${4:-1}
