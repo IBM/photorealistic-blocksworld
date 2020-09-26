@@ -13,7 +13,8 @@
 #   num_jobs: how many jobs to use when distributed.
 # 
 #   gpu:  if true, use the gpu. default : true.
-
+#
+# Use it like: parallel ./generate_all.sh {} 30000 true 50 ::: 3 4 5 6
 #
 # You can modity the "submit" variable in the source code to
 # customize the job submission commands for the job scheduler in your cluster.
