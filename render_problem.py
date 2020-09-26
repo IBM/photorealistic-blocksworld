@@ -71,6 +71,9 @@ def initialize_parser():
   parser.add_argument('--num-objects', default=4, type=int,
                       help="The number of objects to place in each scene")
 
+  parser.add_argument('--num-steps', default=4, type=int,
+                      help="The number of steps to perform from the initial state")
+
   parser.add_argument('--table-size', default=6, type=int,
                       help="The approximate table size relative to the large object size * 1.5.")
   
@@ -157,15 +160,14 @@ def main(args):
   while True:
     try:
       state = State(args)
-      print(json.dumps(state.for_rendering(),indent=2))
 
       render_scene(args,
                    output_image = i_pre,
                    output_scene = s_pre,
                    objects      = state.for_rendering())
 
-      state.shuffle()
-      print(json.dumps(state.for_rendering(),indent=2))
+      for _ in range(args.num_steps):
+        state.action_move()
 
       render_scene(args,
                    output_image = i_suc,
