@@ -5,18 +5,21 @@
 
 # The pair can be seen as an initial and the goal configuration of a planning task.
 
-# generate-blocks-problem.sh [objs] [num_problems] [gpu]
+# generate-blocks-problem.sh [objs] [num_steps] [num_problems] [gpu]
 #
 #   objs:   specity the number of objects, default = 2
+#
+#   num_steps:   specity the number of random actions to perform, default = 4
 # 
 #   num_problems:  The number of problems to be rendered in total.
 #
 #   gpu:  if true, use the gpu. default : true.
 
 export objs=${1:-3}
-export num_problems=${2:-30}
-export gpu=${3:-true}
-export suffix=$4
+export steps=${2:-4}
+export num_problems=${3:-30}
+export gpu=${4:-true}
+export suffix=$5
 
 export dir="prob-blocks-$objs$suffix"
 export proj=$(date +%Y%m%d%H%M)-render-$dir
@@ -34,6 +37,7 @@ job (){
                         --width 300              \
                         --height 200             \
                         --num-objects $objs      \
+                        --num-steps $steps      \
                         $use_gpu                 \
                         --output-dir $output_dir
     ./extract_all_regions_binary.py --out $output_dir/problem.npz $output_dir
