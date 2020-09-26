@@ -475,9 +475,11 @@ class State(object):
 
   def action_move(self):
     o = random.choice(self.tops())
+    index = self.objects.index(o)
     self.objects.remove(o)
     self.shuffle1(o,force_change=True)
-    self.objects.append(o)
+    self.objects.insert(index,o)
+    # note: do not change the order of the object.
     pass
 
   def action_change_material(self):
