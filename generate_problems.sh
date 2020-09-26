@@ -48,6 +48,6 @@ job (){
 
 for i in $(seq $num_problems)
 do
-    job $dir/$i
+    job $dir/$steps-$i
 done
 
