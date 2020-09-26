@@ -5,15 +5,18 @@
 
 # The pair can be seen as an initial and the goal configuration of a planning task.
 
-# generate-blocks-problem.sh [objs] [num_steps] [num_problems] [gpu]
+# generate-blocks-problem.sh [objs] [steps] [num_problems] [gpu]
 #
 #   objs:   specity the number of objects, default = 2
 #
-#   num_steps:   specity the number of random actions to perform, default = 4
+#   steps:   specity the number of random actions to perform, default = 4
 # 
 #   num_problems:  The number of problems to be rendered in total.
 #
 #   gpu:  if true, use the gpu. default : true.
+#
+#
+# use it like: parallel ./generate_problems.sh {} 10 ::: 3 4 5 6 ::: 1 2 3 5 8 13 21
 
 export objs=${1:-3}
 export steps=${2:-4}
