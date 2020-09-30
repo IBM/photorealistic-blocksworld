@@ -90,7 +90,7 @@ def save_as_problem(out,images,bboxes,picsize):
         return coords
 
     B,O,H,W,C = images.shape
-    states = images.reshape((B,O,H*W*C))
+    states = images.reshape((B,O,H*W*C)) / 256
     coords = bboxes_to_coord(bboxes)
     states = np.concatenate((states,coords),axis=-1)
     init,goal = states
