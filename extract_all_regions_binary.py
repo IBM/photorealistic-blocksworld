@@ -16,6 +16,8 @@ parser.add_argument('--resize', type=int, default=32,
                     help="the size of the image patch resized from the region originally extracted")
 parser.add_argument('--include-background', action='store_true',
                     help="include the whole image as a global object. The object is inserted at the end.")
+parser.add_argument('--as-problem', action='store_true',
+                    help="Store the data into 'init' and 'goal' fields used by the planner instead of the usual set of fields in the archive.")
 
 def main(args):
 
@@ -72,8 +74,28 @@ def main(args):
     
     # store transitions
     transitions = np.arange(filenum, dtype=np.uint32)
+
+    if not args.as_problem:
+        np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
+    else:
+        assert len(images) == 2
+        save_as_problem(out,images,bboxes,picsize)
+    pass
+
+def save_as_problem(out,images,bboxes,picsize):
+    def bboxes_to_coord(bboxes):
+        coord1, coord2 = bboxes[:,:,0:2], bboxes[:,:,2:4]
+        center, width = (coord2+coord1)/2, (coord2-coord1)/2
+        coords        = np.concatenate((center,width),axis=-1)
+        return coords
+
+    B,O,H,W,C = images.shape
+    states = images.reshape((B,O,H*W*C))
+    coords = bboxes_to_coord(bboxes)
+    states = np.concatenate((states,coords),axis=-1)
+    init,goal = states
+    np.savez_compressed(out,init=init,goal=goal,picsize=picsize)
     
-    np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
 
 if __name__ == '__main__':
     import sys
