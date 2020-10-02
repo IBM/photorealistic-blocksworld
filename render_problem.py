@@ -412,7 +412,7 @@ class State(object):
     fail = True
     while fail and trial < 100:
       fail = False
-      oi.x = max_x * ((random.randint(0,self.table_size) / self.table_size) - 1/2) + random.gauss(0.0, 0.05 * unit)
+      oi.x = max_x * ((random.randint(0,self.table_size-1) / (self.table_size-1)) - 1/2) + random.gauss(0.0, 0.05 * unit)
       oi.z = 0
       for oj in self.objects:
         if oi.overlap(oj):
