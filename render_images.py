@@ -415,8 +415,8 @@ class State(object):
     """destructively modify an object by choosing a random x position and put it on top of existing objects.
  oi itself is not inserted to the list of objects."""
     # note: if a cube is rotated by 45degree, it should consume 1.41 times the size
-    max_x = np.max(list(properties['sizes'].values())) * self.table_size * 2
-    max_abs_x = max_x / 2
+    unit = np.max(list(properties['sizes'].values()))
+    max_x = unit * 2 * self.table_size
 
     if force_change:
       object_below = self.object_just_below(oi)
@@ -425,7 +425,7 @@ class State(object):
     fail = True
     while fail and trial < 100:
       fail = False
-      oi.x = random.uniform(-max_abs_x, max_abs_x)
+      oi.x = max_x * ((random.randint(0,self.table_size) / self.table_size) - 1/2) + random.normal() * 0.2 * unit
       oi.z = 0
       for oj in self.objects:
         if oi.overlap(oj):
