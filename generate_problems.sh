@@ -18,7 +18,7 @@
 #   suffix:  arbitrary string to be attached to the name of the output directory.
 # 
 #
-# use it like: parallel ./generate_problems.sh {} 10 ::: 3 4 5 6 ::: 1 2 3 5 8 13 21
+# use it like: parallel --line-buffer ./generate_problems.sh {} 10 ::: 3 4 5 6 ::: 1 2 3 5 8 13 21
 
 export objs=${1:-3}
 export steps=${2:-4}
