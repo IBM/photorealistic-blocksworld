@@ -2,7 +2,7 @@
 
 # Render all scenes with a given number of objects and stacks.
 #
-# generate_all.sh [objs] [stacks] [distributed] [num_images] [gpu]
+# generate_all.sh [objs] [num_images] [distributed] [num_jobs] [gpu] [suffix]
 #
 #   objs:   specity the number of objects, default = 2
 # 
@@ -13,6 +13,9 @@
 #   num_jobs: how many jobs to use when distributed.
 # 
 #   gpu:  if true, use the gpu. default : true.
+#
+#   suffix:  arbitrary string to be attached to the name of the output directory.
+# 
 #
 # Use it like: parallel ./generate_all.sh {} 30000 true 50 ::: 3 4 5 6
 #
