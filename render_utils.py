@@ -129,7 +129,7 @@ def render_scene(args,
       bpy.data.objects['Lamp_Fill'].location[i] += rand(args.fill_light_jitter)
 
   # Now make some random objects
-  blender_objects = add_objects(scene_struct, camera, objects)
+  blender_objects = add_objects(args, scene_struct, camera, objects)
 
   # Render the scene and dump the scene data structure
   scene_struct['objects'] = objects
@@ -148,7 +148,7 @@ def render_scene(args,
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)
 
 
-def add_objects(scene_struct, camera, objects):
+def add_objects(args, scene_struct, camera, objects):
   """
   Add objects to the current blender scene
   """
