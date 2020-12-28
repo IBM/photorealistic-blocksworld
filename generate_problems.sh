@@ -5,7 +5,7 @@
 
 # The pair can be seen as an initial and the goal configuration of a planning task.
 
-# generate-blocks-problem.sh [objs] [steps] [num_problems] [gpu]
+# generate_problems.sh [objs] [steps] [num_problems] [gpu] [suffix]
 #
 #   objs:   specity the number of objects, default = 2
 #
@@ -15,6 +15,8 @@
 #
 #   gpu:  if true, use the gpu. default : true.
 #
+#   suffix:  arbitrary string to be attached to the name of the output directory.
+# 
 #
 # use it like: parallel ./generate_problems.sh {} 10 ::: 3 4 5 6 ::: 1 2 3 5 8 13 21
 
@@ -31,7 +33,7 @@ if $gpu
 then
     export use_gpu="--use-gpu 1"
 fi
-  
+
 job (){
     output_dir=$1
     blenderdir=$(echo blender-2.*/)

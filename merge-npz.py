@@ -6,8 +6,8 @@ import tqdm
 
 parser = argparse.ArgumentParser(description='merge npz files.')
 
-parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('npzs', nargs="+")
+parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz', help="output npz pathname.")
+parser.add_argument('npzs', nargs="+", help="list of npz files to be merged.")
 
 args = parser.parse_args()
 

@@ -44,32 +44,46 @@ Note: I changed all keyword options from using underscores to using hyphens (e.g
 
 + `render_images.py` : 
   
-  Renders all possible states of the blocks world and dump the metadata
-  (e.g. bounding boxes) in the corresponding json files.
-  This file runs under the python distribution included in the blender.
+  Renders random scenes using Blender and stores them into a result directory.
+  The directory contains images and metadata.
+  This file must be run in the python environment shipped with Blender.
 
-+ `extract_region.py` :
-
-  Extract each region that contains an object from an image and store them in
-  png files. Takes a metadata json file as the input.
-  This file runs in the conda environment.
++ `render_problem.py` : 
+  
+  Renders two blocksworld states separated by a specified number of steps (`--num-steps`).
+  We generate the initial state randomly and perform a random walk to generate the goal state.
+  This file must be run in the python environment shipped with Blender.
 
 + `extract_all_regions_binary.py` :
 
-  Extract the regions from the every images generated, resize them to 32x32 and
+  For a result directory produced by `render_images.py`,
+  it extracts the regions from the every images generated, resize them to 32x32 and
   store them in a `.npz` container along with the bounding box vector (x1,y1,x2,y2).
-  This file runs in the conda environment.
+  This file must be run in the conda environment.
+
++ `dump_binary.py` :
+
+  For a result directory produced by `render_images.py`,
+  it resizes and stores the entire image into a `.npz` container in the same format.
+  Unlike `extract_all_regions_binary.py`, this script does not extract objects.
+  In order to have the same format, all bounding boxes have (0,0,xmax,ymax) values and the number of objects is 1.
+  This file must be run in the conda environment.
 
 + `generate_all.sh` :
 
   Orchestrate several scripts to generate the whole dataset.
+  For its usage, check the script itself
 
 + `merge-npz.py` :
   
-  Each run of `generate_all` will enumerate the entire states/transtions of a
-  particular blocksworld configuration.
+  When `generate_all` was invoked on distributed environment, this results in multiple npz files in the same format.
   You can generate several environments, each of which has the different block shape, color etc.
-  This script takes several result npz files of such runs and concatenate them into a single file.
+  This script takes several result npz files of such runs and concatenate them into a single npz file.
+
++ `generate_problems.sh` :
+
+  Generates a specified number of random problem instances.
+  For its usage, check the script itself
 
 # Data format
 
