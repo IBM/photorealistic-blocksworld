@@ -2,15 +2,13 @@
 
 # Render all scenes with a given number of objects and stacks.
 #
-# generate_all.sh [objs] [num_images] [distributed] [num_jobs] [gpu] [suffix]
+# generate_all.sh [objs] [num_images] [num_jobs] [gpu] [suffix]
 #
 #   objs:   specity the number of objects, default = 2
 # 
 #   num_images:  The number of images to be rendered in total.
 #
-#   distributed: Whether to split the jobs and run the rendering in parallel. true|false. default = false
-# 
-#   num_jobs: how many jobs to use when distributed.
+#   num_jobs: how many jobs to use (default: 1). When the number is larger than 1, it switches to the distributed mode.
 # 
 #   gpu:  if true, use the gpu. default : true.
 #
@@ -22,13 +20,18 @@
 # You can modity the "submit" variable in the source code to
 # customize the job submission commands for the job scheduler in your cluster.
 
-export objs=${1:-3}
-export num_images=${2:-200}
-export distributed=${3:-false}
-export num_jobs=${4:-1}
-export gpu=${5:-true}
-export suffix=$6
+export objs=${1:-3}         ; shift 1
+export num_images=${1:-200} ; shift 1
+export num_jobs=${1:-1}     ; shift 1
+export gpu=${1:-true}       ; shift 1
+export suffix=$1            ; shift 1
 
+if [ $num_jobs -lt 1 ]
+then
+    export distributed=true
+else
+    export distributed=false
+fi
 export dir="blocks-$objs$suffix"
 export proj=$(date +%Y%m%d%H%M)-render-$dir
 export use_gpu=""
