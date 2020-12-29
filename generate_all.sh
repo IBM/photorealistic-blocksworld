@@ -81,7 +81,7 @@ then
     parallel "$SUBMIT job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $((num_images-num_images_per_job)))
     echo "Run the following command when all jobs have finished:"
     echo "./merge-npz.py --out $dir-objs.npz $dir/*-objs.npz"
-    echo "./merge-npz.py --out $dir-bgnd.npz $dir/*-flat.npz"
+    echo "./merge-npz.py --out $dir-bgnd.npz $dir/*-bgnd.npz"
     echo "./merge-npz.py --out $dir-flat.npz $dir/*-flat.npz"
 else
     job $dir 0 $num_images
