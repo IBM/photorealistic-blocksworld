@@ -54,7 +54,9 @@ job (){
                         --num-steps $steps      \
                         $use_gpu                 \
                         --output-dir $output_dir
-    ./extract_all_regions_binary.py --as-problem --out $output_dir/problem.npz $output_dir
+    ./extract_all_regions_binary.py --as-problem --out $output_dir-objs.npz --resize 32 32 $output_dir
+    ./extract_all_regions_binary.py --as-problem --out $output_dir-bgnd.npz --resize 32 32 --include-background $output_dir
+    ./extract_all_regions_binary.py --as-problem --out $output_dir-flat.npz --resize 100 150 --include-background --exclude-objects $output_dir
 }
 
 for i in $(seq $num_problems)
