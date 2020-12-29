@@ -35,7 +35,7 @@ export num_jobs=${1:-1}     ; shift 1
 export gpu=${1:-true}       ; shift 1
 export suffix=$1            ; shift 1
 
-if [ $num_jobs -lt 1 ]
+if [ $num_jobs -gt 1 ]
 then
     export distributed=true
 else
