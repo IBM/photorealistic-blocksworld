@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -z $@ ]
+if [ -z "$@" ]
 then
 
     cat <<EOF >&2
