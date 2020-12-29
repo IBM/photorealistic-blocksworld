@@ -23,7 +23,7 @@ then
     The pair can be seen as an initial and the goal configuration of a planning task.
     It also runs extract_all_regions_binary.
 
-    Use it like this: parallel --line-buffer ./generate_problems.sh {} 10 ::: 3 4 5 6 ::: 1 2 3 5 8 13 21
+    Use it like this: ./generate_problems.sh 5 5 1
 
 EOF
     exit 1
