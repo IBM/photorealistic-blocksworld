@@ -12,8 +12,10 @@ parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
 parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
-parser.add_argument('--resize', type=int, default=32,
+parser.add_argument('--resize', type=int, default=(32,32), nargs=2, metavar=("Y","X"),
                     help="the size of the image patch resized from the region originally extracted")
+parser.add_argument('--exclude-objects', action='store_true',
+                    help="do not include object representations in the output.")
 parser.add_argument('--include-background', action='store_true',
                     help="include the whole image as a global object. The object is inserted at the end.")
 parser.add_argument('--as-problem', action='store_true',
@@ -23,7 +25,7 @@ def main(args):
 
     directory = args.dir
     out       = args.out
-    resize   = args.resize
+    resizeY, resizeX   = args.resize
 
     scenes=os.path.join(directory,"scene_tr")
     files = os.listdir(scenes)
@@ -37,10 +39,12 @@ def main(args):
         image = imageio.imread(imagefile)[:,:,:3]
         picsize = image.shape
 
+    if args.exclude_objects:
+        maxobj = 0
     if args.include_background:
         maxobj += 1
 
-    images = np.zeros((filenum, maxobj, resize, resize, 3), dtype=np.uint8)
+    images = np.zeros((filenum, maxobj, resizeY, resizeX, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
     if args.include_background:
@@ -54,22 +58,19 @@ def main(args):
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
 
-        if args.include_background:
-            assert(maxobj==len(scene["objects"])+1)
-        else:
-            assert(maxobj==len(scene["objects"]))
-
         imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
         assert(picsize==image.shape)
         if args.include_background:
-            images[i,-1] = skimage.transform.resize(image,(resize,resize,3),preserve_range=True)
+            images[i,-1] = skimage.transform.resize(image,(resizeY, resizeX,3),preserve_range=True)
+        if args.exclude_objects:
+            continue
 
         for j, obj in enumerate(scene["objects"]):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
-            images[i,j] = skimage.transform.resize(region,(resize,resize,3),preserve_range=True)
+            images[i,j] = skimage.transform.resize(region,(resizeY, resizeX,3),preserve_range=True)
             bboxes[i,j] = bbox
     
     # store transitions
