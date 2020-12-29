@@ -54,8 +54,9 @@ job (){
                         --output-dir $output_dir \
                         --start-idx $start_idx   \
                         --num-images $num_images
-    ./extract_all_regions_binary.py --out $output_dir-objs.npz $output_dir
-    ./dump_binary.py                --out $output_dir-flat.npz $output_dir
+    ./extract_all_regions_binary.py --out $output_dir-objs.npz --resize 32 32 $output_dir
+    ./extract_all_regions_binary.py --out $output_dir-bgnd.npz --resize 32 32 --include-background $output_dir
+    ./extract_all_regions_binary.py --out $output_dir-flat.npz --resize 100 150 --include-background --exclude-objects $output_dir
 }
 
 export -f job
@@ -68,6 +69,7 @@ then
     parallel "$submit job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $((num_images-num_images_per_job)))
     echo "Run the following command when all jobs have finished:"
     echo "./merge-npz.py --out $dir-objs.npz $dir/*-objs.npz"
+    echo "./merge-npz.py --out $dir-bgnd.npz $dir/*-flat.npz"
     echo "./merge-npz.py --out $dir-flat.npz $dir/*-flat.npz"
 else
     job $dir 0 $num_images
