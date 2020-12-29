@@ -1,26 +1,33 @@
 #!/bin/bash
 
-# Render all scenes with a given number of objects and stacks.
-#
-# generate_all.sh [objs] [num_images] [num_jobs] [gpu] [suffix]
-#
-#   objs:   specity the number of objects, default = 2
-# 
-#   num_images:  The number of images to be rendered in total.
-#
-#   num_jobs: how many jobs to use (default: 1). When the number is larger than 1, it switches to the distributed mode.
-# 
-#   gpu:  if true, use the gpu. default : true.
-#
-#   suffix:  arbitrary string to be attached to the name of the output directory.
-#
-# It reads an environment variable $SUBMIT as a job submission command template.
-# It defaults to jbsub, which is a close-sourced script available in a particular compute cluster of the author.
-#
-# Use it like: SUBMIT="qsub -V -b n -cwd" ./generate_all.sh 3 30000 50
-#
-# You can modity the "submit" variable in the source code to
-# customize the job submission commands for the job scheduler in your cluster.
+if [ -z $@ ]
+then
+
+    cat <<EOF >&2
+
+
+    Usage: generate_all.sh [objs] [num_images] [num_jobs] [gpu] [suffix]
+    
+      objs:   specity the number of objects, default = 2
+    
+      num_images:  The number of images to be rendered in total.
+    
+      num_jobs: how many jobs to use (default: 1). When the number is larger than 1, it switches to the distributed mode.
+    
+      gpu:  if true, use the gpu. default : true.
+    
+      suffix:  arbitrary string to be attached to the name of the output directory.
+
+
+    Generate scenes randomly and render them.
+    It reads an environment variable $SUBMIT as a job submission command template.
+    It defaults to jbsub, which is a close-sourced script available in a particular compute cluster of the author.
+    
+    Use it like this: SUBMIT="qsub -V -b n -cwd" ./generate_all.sh 3 30000 50
+    
+EOF
+    exit 1
+fi
 
 export objs=${1:-3}         ; shift 1
 export num_images=${1:-200} ; shift 1
