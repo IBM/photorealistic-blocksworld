@@ -13,9 +13,11 @@
 #   gpu:  if true, use the gpu. default : true.
 #
 #   suffix:  arbitrary string to be attached to the name of the output directory.
-# 
 #
-# Use it like: parallel ./generate_all.sh {} 30000 true 50 ::: 3 4 5 6
+# It reads an environment variable $SUBMIT as a job submission command template.
+# It defaults to jbsub, which is a close-sourced script available in a particular compute cluster of the author.
+#
+# Use it like: SUBMIT="qsub -V -b n -cwd" ./generate_all.sh 3 30000 50
 #
 # You can modity the "submit" variable in the source code to
 # customize the job submission commands for the job scheduler in your cluster.
@@ -41,7 +43,7 @@ then
 fi
   
 
-submit="jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"
+SUBMIT=${SUBMIT:-"jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"}
 
 job (){
     output_dir=$1
@@ -69,7 +71,7 @@ export SHELL=/bin/bash
 if $distributed
 then
     num_images_per_job=$((num_images/num_jobs))
-    parallel "$submit job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $((num_images-num_images_per_job)))
+    parallel "$SUBMIT job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $((num_images-num_images_per_job)))
     echo "Run the following command when all jobs have finished:"
     echo "./merge-npz.py --out $dir-objs.npz $dir/*-objs.npz"
     echo "./merge-npz.py --out $dir-bgnd.npz $dir/*-flat.npz"
