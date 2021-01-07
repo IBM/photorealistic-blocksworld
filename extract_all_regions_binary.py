@@ -65,7 +65,7 @@ def main(args):
         bboxes[:,-1] = [0,0,picsize[1],picsize[0]]
 
     # store states
-    for i,scenefile in tqdm.tqdm(enumerate(files)):
+    for i,scenefile in tqdm.tqdm(enumerate(files),total=len(files)):
         
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
