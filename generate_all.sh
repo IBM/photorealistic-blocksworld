@@ -70,7 +70,7 @@ job (){
     ./extract_all_regions_binary.py --out $output_dir-bgnd.npz --resize 32 32 --include-background $output_dir
     ./extract_all_regions_binary.py --out $output_dir-flat.npz --resize 100 150 --include-background --exclude-objects $output_dir
     ./extract_all_regions_binary.py --out $output_dir-smll.npz --resize 40 60 --include-background --exclude-objects $output_dir
-    ./extract_all_regions_binary.py --out $output_dir-smln.npz --resize 40 60 --include-background --exclude-objects --normalize-histogram $output_dir
+    ./extract_all_regions_binary.py --out $output_dir-smln.npz --resize 40 60 --include-background --exclude-objects --preprocess $output_dir
 }
 
 export -f job

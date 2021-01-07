@@ -23,13 +23,35 @@ parser.add_argument('--include-background', action='store_true',
                     help="include the whole image as a global object. The object is inserted at the end.")
 parser.add_argument('--as-problem', action='store_true',
                     help="Store the data into 'init' and 'goal' fields used by the planner instead of the usual set of fields in the archive.")
-parser.add_argument('--normalize-histogram', action='store_true',
+parser.add_argument('--preprocess', action='store_true',
                     help="Normalize the image using histogram normalization (images are converted to ycbcr, y channel is normalzied, then put back to rgb.")
+parser.add_argument('--preprocess-mode', type=int, default=6,
+                    help="")
 
-def color_histogram_normalization(image):
-    yuv = skimage.color.rgb2yuv(image)
-    yuv[:,:,0] = skimage.exposure.equalize_hist(yuv[:,:,0])
-    return np.clip(skimage.color.yuv2rgb(yuv),0.0,1.0)
+
+
+def preprocess(mode,rgb):
+    if mode == 0:
+        return rgb
+    elif mode == 1:
+        yuv = skimage.color.rgb2yuv(rgb)
+        yuv[:,:,0] = skimage.exposure.equalize_hist(yuv[:,:,0])
+        return np.clip(skimage.color.yuv2rgb(yuv),0.0,1.0)
+    elif mode == 2:
+        return skimage.exposure.equalize_hist(rgb)
+    elif mode == 3:
+        return skimage.exposure.equalize_adapthist(rgb)
+    elif mode == 4:
+        return skimage.exposure.rescale_intensity(im)
+    elif mode == 5:
+        hsv = skimage.color.rgb2hsv(rgb)
+        hsv[:,:,1] = skimage.exposure.rescale_intensity(hsv[:,:,1])
+        return skimage.color.hsv2rgb(hsv)
+    elif mode == 6:
+        hsv = skimage.color.rgb2hsv(rgb)
+        hsv[:,:,1] = skimage.exposure.rescale_intensity(hsv[:,:,1])
+        hsv[:,:,2] = skimage.exposure.rescale_intensity(hsv[:,:,2])
+        return skimage.color.hsv2rgb(hsv)
 
 
 
@@ -75,8 +97,8 @@ def main(args):
         assert(picsize==image.shape)
         if args.include_background:
             image = skimage.transform.resize(image,(resizeY, resizeX,3))
-            if args.normalize_histogram:
-                image = color_histogram_normalization(image)
+            if args.preprocess:
+                image = preprocess(args.preprocess_mode,image)
             images[i,-1] = img_as_ubyte(image)
         if args.exclude_objects:
             continue
@@ -86,8 +108,8 @@ def main(args):
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             image = skimage.transform.resize(region,(resizeY, resizeX,3))
-            if args.normalize_histogram:
-                image = color_histogram_normalization(image)
+            if args.preprocess:
+                image = preprocess(args.preprocess_mode,image)
             images[i,j] = image
             bboxes[i,j] = bbox
     
