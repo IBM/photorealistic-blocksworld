@@ -94,12 +94,11 @@ def main(args):
 
         imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
         image = img_as_float(imageio.imread(imagefile)[:,:,:3])
+        if args.preprocess:
+            image = preprocess(args.preprocess_mode,image)
         assert(picsize==image.shape)
         if args.include_background:
-            image = skimage.transform.resize(image,(resizeY, resizeX,3))
-            if args.preprocess:
-                image = preprocess(args.preprocess_mode,image)
-            images[i,-1] = img_as_ubyte(image)
+            images[i,-1] = img_as_ubyte(skimage.transform.resize(image,(resizeY, resizeX,3)))
         if args.exclude_objects:
             continue
 
@@ -107,10 +106,7 @@ def main(args):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
-            image = skimage.transform.resize(region,(resizeY, resizeX,3))
-            if args.preprocess:
-                image = preprocess(args.preprocess_mode,image)
-            images[i,j] = image
+            images[i,j] = img_as_ubyte(skimage.transform.resize(region,(resizeY, resizeX,3)))
             bboxes[i,j] = bbox
     
     # store transitions
