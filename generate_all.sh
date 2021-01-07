@@ -69,6 +69,7 @@ job (){
     ./extract_all_regions_binary.py --out $output_dir-objs.npz --resize 32 32 $output_dir
     ./extract_all_regions_binary.py --out $output_dir-bgnd.npz --resize 32 32 --include-background $output_dir
     ./extract_all_regions_binary.py --out $output_dir-flat.npz --resize 100 150 --include-background --exclude-objects $output_dir
+    ./extract_all_regions_binary.py --out $output_dir-smll.npz --resize 50 75 --include-background --exclude-objects $output_dir
 }
 
 export -f job
@@ -83,6 +84,7 @@ then
     echo "./merge-npz.py --out $dir-objs.npz $dir/*-objs.npz"
     echo "./merge-npz.py --out $dir-bgnd.npz $dir/*-bgnd.npz"
     echo "./merge-npz.py --out $dir-flat.npz $dir/*-flat.npz"
+    echo "./merge-npz.py --out $dir-smll.npz $dir/*-smll.npz"
 else
     job $dir 0 $num_images
 fi
