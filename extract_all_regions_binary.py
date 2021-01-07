@@ -7,6 +7,7 @@ import os.path
 import skimage.transform
 import skimage.exposure
 import skimage.color
+from skimage.util import img_as_float, img_as_ubyte
 import argparse
 import tqdm
 
@@ -26,9 +27,9 @@ parser.add_argument('--normalize-histogram', action='store_true',
                     help="Normalize the image using histogram normalization (images are converted to ycbcr, y channel is normalzied, then put back to rgb.")
 
 def color_histogram_normalization(image):
-    ycbcr = skimage.color.rgb2ycbcr(image)
-    ycbcr[:,:,0] = skimage.exposure.equalize_hist(ycbcr[:,:,0])
-    return skimage.color.ycbcr2rgb(image)
+    yuv = skimage.color.rgb2yuv(image)
+    yuv[:,:,0] = skimage.exposure.equalize_hist(yuv[:,:,0])
+    return np.clip(skimage.color.yuv2rgb(yuv),0.0,1.0)
 
 
 
@@ -70,12 +71,13 @@ def main(args):
             scene = json.load(f)
 
         imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
-        image = imageio.imread(imagefile)[:,:,:3]
+        image = img_as_float(imageio.imread(imagefile)[:,:,:3])
         assert(picsize==image.shape)
         if args.include_background:
-            images[i,-1] = skimage.transform.resize(image,(resizeY, resizeX,3),preserve_range=True)
+            image = skimage.transform.resize(image,(resizeY, resizeX,3))
             if args.normalize_histogram:
-                images[i,-1] = color_histogram_normalization(images[i,-1])
+                image = color_histogram_normalization(image)
+            images[i,-1] = img_as_ubyte(image)
         if args.exclude_objects:
             continue
 
@@ -83,9 +85,10 @@ def main(args):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
-            images[i,j] = skimage.transform.resize(region,(resizeY, resizeX,3),preserve_range=True)
+            image = skimage.transform.resize(region,(resizeY, resizeX,3))
             if args.normalize_histogram:
-                images[i,j] = color_histogram_normalization(images[i,j])
+                image = color_histogram_normalization(image)
+            images[i,j] = image
             bboxes[i,j] = bbox
     
     # store transitions
