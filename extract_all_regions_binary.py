@@ -5,6 +5,8 @@ import json
 import imageio
 import os.path
 import skimage.transform
+import skimage.exposure
+import skimage.color
 import argparse
 import tqdm
 
@@ -20,6 +22,15 @@ parser.add_argument('--include-background', action='store_true',
                     help="include the whole image as a global object. The object is inserted at the end.")
 parser.add_argument('--as-problem', action='store_true',
                     help="Store the data into 'init' and 'goal' fields used by the planner instead of the usual set of fields in the archive.")
+parser.add_argument('--normalize-histogram', action='store_true',
+                    help="Normalize the image using histogram normalization (images are converted to ycbcr, y channel is normalzied, then put back to rgb.")
+
+def color_histogram_normalization(image):
+    ycbcr = skimage.color.rgb2ycbcr(image)
+    ycbcr[:,:,0] = skimage.exposure.equalize_hist(ycbcr[:,:,0])
+    return skimage.color.ycbcr2rgb(image)
+
+
 
 def main(args):
 
@@ -63,6 +74,8 @@ def main(args):
         assert(picsize==image.shape)
         if args.include_background:
             images[i,-1] = skimage.transform.resize(image,(resizeY, resizeX,3),preserve_range=True)
+            if args.normalize_histogram:
+                images[i,-1] = color_histogram_normalization(images[i,-1])
         if args.exclude_objects:
             continue
 
@@ -71,6 +84,8 @@ def main(args):
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             images[i,j] = skimage.transform.resize(region,(resizeY, resizeX,3),preserve_range=True)
+            if args.normalize_histogram:
+                images[i,j] = color_histogram_normalization(images[i,j])
             bboxes[i,j] = bbox
     
     # store transitions
