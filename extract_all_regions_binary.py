@@ -98,7 +98,8 @@ def main(args):
             image = preprocess(args.preprocess_mode,image)
         assert(picsize==image.shape)
         if args.include_background:
-            images[i,-1] = img_as_ubyte(skimage.transform.resize(image,(resizeY, resizeX,3)))
+            # note: resize may cause numerical error that makes values exceed 0.0,1.0
+            images[i,-1] = img_as_ubyte(np.clip(skimage.transform.resize(image,(resizeY, resizeX,3)), 0.0, 1.0))
         if args.exclude_objects:
             continue
 
@@ -106,7 +107,8 @@ def main(args):
             bbox = tuple(obj["bbox"])
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
-            images[i,j] = img_as_ubyte(skimage.transform.resize(region,(resizeY, resizeX,3)))
+            # note: resize may cause numerical error that makes values exceed 0.0,1.0
+            images[i,j] = img_as_ubyte(np.clip(skimage.transform.resize(region,(resizeY, resizeX,3)), 0.0, 1.0))
             bboxes[i,j] = bbox
     
     # store transitions
