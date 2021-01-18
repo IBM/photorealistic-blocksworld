@@ -59,8 +59,8 @@ job (){
     blenderdir=$(echo blender-2.*/)
     $blenderdir/blender -noaudio --background --python render_images.py -- \
                         --render-num-samples 300 \
-                        --width 300              \
-                        --height 200             \
+                        --width 150              \
+                        --height 100             \
                         --num-objects $objs      \
                         $use_gpu                 \
                         --output-dir $output_dir \
