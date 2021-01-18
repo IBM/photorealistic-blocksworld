@@ -11,7 +11,7 @@ class Unstackable(Exception):
 
 
 class Block(object):
-  def __init__(self):
+  def __init__(self,i):
     shape_name, self.shape = random_dict(properties['shapes'])
     _, self.color          = random_dict(properties['colors'])
     _, self.size           = random_dict(properties['sizes'])
@@ -19,6 +19,7 @@ class Block(object):
     self.rotation          = 360.0 * random.random()
     self.stackable         = properties['stackable'][shape_name] == 1
     self.location          = [0,0,0]
+    self.id                = i
     pass
 
   @property
@@ -71,7 +72,7 @@ class State(object):
     objects         = []
     for i in range(args.num_objects):
       while True:
-        obj = Block()
+        obj = Block(i)
         ok = True
         for o2 in objects:
           if obj == o2:
@@ -87,7 +88,7 @@ class State(object):
     pass
 
   def for_rendering(self):
-    return [ vars(o) for o in self.objects ]
+    return [ vars(o) for o in sorted(self.objects, key=(lambda o: o.id)) ]
 
   def shuffle(self):
     """destructively modify the list of objects using shuffle1."""
