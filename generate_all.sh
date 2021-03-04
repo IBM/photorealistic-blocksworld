@@ -50,7 +50,7 @@ then
 fi
   
 
-SUBMIT=${SUBMIT:-"jbsub -mem 4g -cores 1+1 -queue x86_1h -proj $proj"}
+SUBMIT=${SUBMIT:-"jbsub -mem 4g -cores 1+1 -queue x86_6h -proj $proj"}
 
 job (){
     output_dir=$1
@@ -69,6 +69,7 @@ job (){
     ./extract_all_regions_binary.py  --out $output_dir-objs.npz --resize 16 16 $output_dir
     ./extract_all_regions_binary.py  --out $output_dir-bgnd.npz --resize 16 16 --include-background $output_dir
     ./extract_all_regions_binary.py  --out $output_dir-flat.npz --resize 40 60 --include-background --exclude-objects $output_dir
+    ./extract_all_regions_binary.py  --out $output_dir-high.npz --resize 80 120 --include-background --exclude-objects $output_dir
 }
 
 export -f job
