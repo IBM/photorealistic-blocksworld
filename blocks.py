@@ -73,10 +73,13 @@ class State(object):
     for i in range(args.num_objects):
       while True:
         obj = Block(i)
+        if args.allow_duplicates:
+          break
         ok = True
         for o2 in objects:
           if obj == o2:
             ok = False
+            print("duplicate object!")
             break
         if ok:
           break

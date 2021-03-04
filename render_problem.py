@@ -49,6 +49,8 @@ def initialize_parser():
                       help="Directory where .blend files for object models are stored")
   parser.add_argument('--material-dir', default='data/materials',
                       help="Directory where .blend files for materials are stored")
+  parser.add_argument('--allow-duplicates', action="store_true",
+                      help="Allow duplicate objects")
   
   # Settings for objects
   parser.add_argument('--num-objects', default=4, type=int,
