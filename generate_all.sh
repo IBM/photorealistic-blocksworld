@@ -42,7 +42,7 @@ else
     export distributed=false
 fi
 export dir="monoblocks-$objs$suffix"
-export proj=$(date +%Y%m%d%H%M)-render-$dir
+export proj=render-$dir
 export use_gpu=""
 if $gpu
 then
