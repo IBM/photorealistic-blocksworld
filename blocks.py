@@ -84,6 +84,7 @@ class State(object):
       objects.append(obj)
 
     self.table_size = args.table_size
+    self.object_jitter = args.object_jitter
     self.objects = objects
     self.shuffle()
     pass
@@ -113,7 +114,7 @@ class State(object):
     fail = True
     while fail and trial < 100:
       fail = False
-      oi.x = max_x * ((random.randint(0,self.table_size-1) / (self.table_size-1)) - 1/2) + random.gauss(0.0, 0.05 * unit)
+      oi.x = max_x * ((random.randint(0,self.table_size-1) / (self.table_size-1)) - 1/2) + random.gauss(0.0, self.object_jitter * unit)
       oi.z = 0
       for oj in self.objects:
         if oi.overlap(oj):
