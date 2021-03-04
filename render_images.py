@@ -59,7 +59,7 @@ def initialize_parser():
   parser.add_argument('--table-size', default=6, type=int,
                       help="The approximate table size relative to the large object size * 1.5.")
   
-  parser.add_argument('--object-jitter', default=0.2, type=int,
+  parser.add_argument('--object-jitter', default=0.0, type=int,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
   
   # Output settings
@@ -98,13 +98,13 @@ def initialize_parser():
                       help="The width (in pixels) for the rendered images")
   parser.add_argument('--height', default=240, type=int,
                       help="The height (in pixels) for the rendered images")
-  parser.add_argument('--key-light-jitter', default=1.0, type=float,
+  parser.add_argument('--key-light-jitter', default=0.0, type=float,
                       help="The magnitude of random jitter to add to the key light position.")
-  parser.add_argument('--fill-light-jitter', default=1.0, type=float,
+  parser.add_argument('--fill-light-jitter', default=0.0, type=float,
                       help="The magnitude of random jitter to add to the fill light position.")
-  parser.add_argument('--back-light-jitter', default=1.0, type=float,
+  parser.add_argument('--back-light-jitter', default=0.0, type=float,
                       help="The magnitude of random jitter to add to the back light position.")
-  parser.add_argument('--camera-jitter', default=0.5, type=float,
+  parser.add_argument('--camera-jitter', default=0.0, type=float,
                       help="The magnitude of random jitter to add to the camera position")
   parser.add_argument('--render-num-samples', default=512, type=int,
                       help="The number of samples to use when rendering. Larger values will " +
