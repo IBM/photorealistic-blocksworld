@@ -2,4 +2,4 @@
 
 
 
-parallel --line-buffer -v ./merge-npz.py --out blocks-{1}-{2}.npz blocks-{1}/*-{2}.npz ::: {3..6} ::: objs bgnd flat high
+parallel --line-buffer -v ./merge-npz.py --out monoblocks-{1}-{2}.npz monoblocks-{1}/*-{2}.npz ::: {3..6} ::: objs bgnd flat high

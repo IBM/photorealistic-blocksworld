@@ -35,7 +35,7 @@ export num_problems=${3:-30}
 export gpu=${4:-true}
 export suffix=$5
 
-export dir="prob-blocks-$objs$suffix"
+export dir="prob-monoblocks-$objs$suffix"
 export proj=$(date +%Y%m%d%H%M)-render-$dir
 export use_gpu=""
 if $gpu
@@ -47,6 +47,8 @@ job (){
     output_dir=$1
     blenderdir=$(echo blender-2.*/)
     $blenderdir/blender -noaudio --background --python render_problem.py -- \
+                        --properties-json data/mono-properties.json \
+                        --allow-duplicates \
                         --render-num-samples 300 \
                         --width 300              \
                         --height 200             \
