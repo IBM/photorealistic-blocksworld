@@ -51,9 +51,7 @@ class Block(object):
       return False
     if o2 is None:
       return False
-    return \
-      (o1.shape == o2.shape and o1.size == o2.size) or \
-      (o1.color == o2.color)
+    return o1.id == o2.id
 
   def overlap(o1, o2):
     return (abs(o1.x - o2.x) < (o1.size + o2.size))
