@@ -41,7 +41,7 @@ then
 else
     export distributed=false
 fi
-export dir="blocks-$objs$suffix"
+export dir="monoblocks-$objs$suffix"
 export proj=$(date +%Y%m%d%H%M)-render-$dir
 export use_gpu=""
 if $gpu
@@ -58,6 +58,8 @@ job (){
     num_images=$3
     blenderdir=$(echo blender-2.*/)
     $blenderdir/blender -noaudio --background --python render_images.py -- \
+                        --properties-json data/mono-properties.json \
+                        --allow-duplicates \
                         --render-num-samples 300 \
                         --width 150              \
                         --height 100             \
