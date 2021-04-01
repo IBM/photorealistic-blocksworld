@@ -50,8 +50,8 @@ job (){
                         --properties-json data/mono-properties.json \
                         --allow-duplicates \
                         --render-num-samples 300 \
-                        --width 300              \
-                        --height 200             \
+                        --width 150              \
+                        --height 100             \
                         --num-objects $objs      \
                         --num-steps $steps      \
                         $use_gpu                 \
