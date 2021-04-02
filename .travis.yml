@@ -40,7 +40,7 @@ env:
   - URL=https://download.blender.org/release/Blender2.82/blender-2.82a-linux64.tar.xz
   # - URL=https://download.blender.org/release/Blender2.83/blender-2.83.0-linux64.tar.xz
   # - URL=https://download.blender.org/release/Blender2.83/blender-2.83.1-linux64.tar.xz
-  - URL=https://download.blender.org/release/Blender2.83/blender-2.83.2-linux64.tar.xz
+  - URL=https://download.blender.org/release/Blender2.83/blender-2.83.13-linux64.tar.xz
 
 jobs:
   allow_failures:
