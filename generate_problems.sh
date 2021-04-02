@@ -45,7 +45,7 @@ fi
 
 job (){
     output_dir=$1
-    blenderdir=$(echo blender-2.*/)
+    blenderdir=$(ls -d blender-2.*/ | tail -n 1)
     $blenderdir/blender -noaudio --background --python render_problem.py -- \
                         --properties-json data/mono-properties.json \
                         --allow-duplicates \
