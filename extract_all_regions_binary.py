@@ -27,6 +27,8 @@ parser.add_argument('--preprocess', action='store_true',
                     help="Normalize the image using histogram normalization (images are converted to ycbcr, y channel is normalzied, then put back to rgb.")
 parser.add_argument('--preprocess-mode', type=int, default=6,
                     help="")
+parser.add_argument('--resize-image', action="store_true",
+                    help="When this flag is set, just resize the image and put the results in the parent directory.")
 
 
 
@@ -57,11 +59,11 @@ def preprocess(mode,rgb):
 
 def main(args):
 
-    directory = args.dir
-    out       = args.out
-    resizeY, resizeX   = args.resize
+    if args.resize_image:
+        save_as_resize(args)
+        return
 
-    scenes=os.path.join(directory,"scene_tr")
+    scenes=os.path.join(args.dir,"scene_tr")
     files = os.listdir(scenes)
     files.sort()
     filenum = len(files)
@@ -69,7 +71,7 @@ def main(args):
     with open(os.path.join(scenes,files[0]), 'r') as f:
         scene = json.load(f)
         maxobj = len(scene["objects"])
-        imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
+        imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
         image = imageio.imread(imagefile)[:,:,:3]
         picsize = image.shape
 
@@ -78,7 +80,7 @@ def main(args):
     if args.include_background:
         maxobj += 1
 
-    images = np.zeros((filenum, maxobj, resizeY, resizeX, 3), dtype=np.uint8)
+    images = np.zeros((filenum, maxobj, *args.resize, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
     if args.include_background:
@@ -92,14 +94,14 @@ def main(args):
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
 
-        imagefile = os.path.join(directory,"image_tr",scene["image_filename"])
+        imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
         image = img_as_float(imageio.imread(imagefile)[:,:,:3])
         if args.preprocess:
             image = preprocess(args.preprocess_mode,image)
         assert(picsize==image.shape)
         if args.include_background:
             # note: resize may cause numerical error that makes values exceed 0.0,1.0
-            images[i,-1] = img_as_ubyte(np.clip(skimage.transform.resize(image,(resizeY, resizeX,3)), 0.0, 1.0))
+            images[i,-1] = img_as_ubyte(np.clip(skimage.transform.resize(image,(*args.resize,3)), 0.0, 1.0))
         if args.exclude_objects:
             continue
 
@@ -108,20 +110,20 @@ def main(args):
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             # note: resize may cause numerical error that makes values exceed 0.0,1.0
-            images[i,j] = img_as_ubyte(np.clip(skimage.transform.resize(region,(resizeY, resizeX,3)), 0.0, 1.0))
+            images[i,j] = img_as_ubyte(np.clip(skimage.transform.resize(region,(*args.resize,3)), 0.0, 1.0))
             bboxes[i,j] = bbox
     
     # store transitions
     transitions = np.arange(filenum, dtype=np.uint32)
 
-    if not args.as_problem:
-        np.savez_compressed(out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
+    if args.as_problem:
+        save_as_problem(args.out,images,bboxes,picsize)
     else:
-        assert len(images) == 2
-        save_as_problem(out,images,bboxes,picsize)
+        np.savez_compressed(args.out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
     pass
 
 def save_as_problem(out,images,bboxes,picsize):
+    assert len(images) == 2
     def bboxes_to_coord(bboxes):
         coord1, coord2 = bboxes[:,:,0:2], bboxes[:,:,2:4]
         center, width = (coord2+coord1)/2, (coord2-coord1)/2
@@ -134,7 +136,14 @@ def save_as_problem(out,images,bboxes,picsize):
     states = np.concatenate((states,coords),axis=-1)
     init,goal = states
     np.savez_compressed(out,init=init,goal=goal,picsize=picsize)
-    
+
+def save_as_resize(args):
+    for name in ["init.png", "goal.png"]:
+        imagefile = os.path.join(args.dir,"image_tr",name)
+        image = img_as_float(imageio.imread(imagefile)[:,:,:3])
+        image = img_as_ubyte(np.clip(skimage.transform.resize(image,(*args.resize,3)), 0.0, 1.0))
+        imageio.imwrite(os.path.join(args.dir,name), image)
+    pass
 
 if __name__ == '__main__':
     import sys

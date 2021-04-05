@@ -60,6 +60,7 @@ job (){
     ./extract_all_regions_binary.py --as-problem --out $output_dir/bgnd.npz --resize 16 16 --include-background $output_dir
     ./extract_all_regions_binary.py --as-problem --out $output_dir/flat.npz --resize 40 60 --include-background --exclude-objects $output_dir
     ./extract_all_regions_binary.py --as-problem --out $output_dir/high.npz --resize 80 120 --include-background --exclude-objects $output_dir
+    ./extract_all_regions_binary.py --resize-image --resize 40 60 $output_dir
 }
 
 for i in $(seq $num_problems)
