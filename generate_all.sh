@@ -70,7 +70,7 @@ job (){
                         --num-images $num_images
     ./extract_all_regions_binary.py  --out $output_dir-objs.npz --resize 16 16 $output_dir
     ./extract_all_regions_binary.py  --out $output_dir-bgnd.npz --resize 16 16 --include-background $output_dir
-    ./extract_all_regions_binary.py  --out $output_dir-flat.npz --resize 40 60 --include-background --exclude-objects $output_dir
+    ./extract_all_regions_binary.py  --out $output_dir-flat.npz --resize 30 45 --include-background --exclude-objects $output_dir
     ./extract_all_regions_binary.py  --out $output_dir-high.npz --resize 80 120 --include-background --exclude-objects $output_dir
 }
 
