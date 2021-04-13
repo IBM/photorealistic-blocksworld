@@ -2,7 +2,7 @@
 
 set -e
 
-parallel ./generate_all.sh {} 30000 50 ::: {3..6}
+parallel ./generate_all.sh {} 40000 50 ::: {3..6}
 
 echo render-monoblocks-{3..6}
 watch-proj render-monoblocks-{3..6}
