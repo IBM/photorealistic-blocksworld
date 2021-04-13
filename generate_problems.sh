@@ -49,7 +49,7 @@ job (){
     $blenderdir/blender -noaudio --background --python render_problem.py -- \
                         --properties-json data/mono-properties.json \
                         --allow-duplicates \
-                        --render-num-samples 300 \
+                        --render-num-samples 150 \
                         --width 150              \
                         --height 100             \
                         --num-objects $objs      \
