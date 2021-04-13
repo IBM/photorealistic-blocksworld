@@ -56,7 +56,7 @@ def initialize_parser():
   parser.add_argument('--num-objects', default=4, type=int,
                       help="The number of objects to place in each scene")
 
-  parser.add_argument('--table-size', default=6, type=int,
+  parser.add_argument('--table-size', default=5, type=int,
                       help="The approximate table size relative to the large object size * 1.5.")
   
   parser.add_argument('--object-jitter', default=0.0, type=int,
