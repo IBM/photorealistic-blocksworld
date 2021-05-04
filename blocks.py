@@ -104,7 +104,7 @@ class State(object):
     """destructively modify an object by choosing a random x position and put it on top of existing objects.
  oi itself is not inserted to the list of objects."""
     # note: if a cube is rotated by 45degree, it should consume 1.41 times the size
-    unit = max(*list(properties['sizes'].values()))
+    unit = max(properties['sizes'].values())
     max_x = unit * 2 * self.table_size
 
     if force_change:
