@@ -41,7 +41,7 @@ then
 else
     export distributed=false
 fi
-export dir="monoblocks-$objs$suffix"
+export dir="cylinders-$objs$suffix"
 export proj=render-$dir
 export use_gpu=""
 if $gpu
@@ -58,7 +58,7 @@ job (){
     num_images=$3
     blenderdir=$(ls -d blender-2.*/ | tail -n 1)
     $blenderdir/blender -noaudio --background --python render_images.py -- \
-                        --properties-json data/mono-properties.json \
+                        --properties-json data/cylinders-properties.json \
                         --allow-duplicates \
                         --render-num-samples 150 \
                         --width 150              \
