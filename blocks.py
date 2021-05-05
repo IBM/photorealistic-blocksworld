@@ -53,6 +53,16 @@ class Block(object):
       return False
     return o1.id == o2.id
 
+  def similar(o1,o2):
+    if o1 is None:
+      return False
+    if o2 is None:
+      return False
+    return \
+      o1.color == o2.color and \
+      o1.size  == o2.size  and \
+      o1.material == o2.material
+
   def overlap(o1, o2):
     return (abs(o1.x - o2.x) < (o1.size + o2.size))
 
@@ -70,18 +80,18 @@ class State(object):
     objects         = []
     for i in range(args.num_objects):
       while True:
-        obj = Block(i)
+        o1 = Block(i)
         if args.allow_duplicates:
           break
         ok = True
         for o2 in objects:
-          if obj == o2:
+          if o1.similar(o2):
             ok = False
             print("duplicate object!")
             break
         if ok:
           break
-      objects.append(obj)
+      objects.append(o1)
 
     self.table_size = args.table_size
     self.object_jitter = args.object_jitter

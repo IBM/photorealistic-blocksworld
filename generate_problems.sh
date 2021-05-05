@@ -48,7 +48,6 @@ job (){
     blenderdir=$(ls -d blender-2.*/ | tail -n 1)
     $blenderdir/blender -noaudio --background --python render_problem.py -- \
                         --properties-json data/cylinders-properties.json \
-                        --allow-duplicates \
                         --render-num-samples 150 \
                         --width 150              \
                         --height 100             \
