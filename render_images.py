@@ -129,6 +129,7 @@ def main(args):
       name : tuple(float(c) / 255.0 for c in rgb) + (1.0,) \
       for name, rgb in blocks.properties['colors'].items()
     }
+  assert len(blocks.properties["colors"].items()) >= args.num_objects
   
   trans_img_dir   = os.path.join(args.output_dir,"image_tr")
   trans_scene_dir = os.path.join(args.output_dir,"scene_tr")
