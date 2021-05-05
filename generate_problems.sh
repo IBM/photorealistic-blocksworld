@@ -65,6 +65,6 @@ job (){
 
 for i in $(seq $num_problems)
 do
-    job $dir/$steps-$i
+    job $dir/$steps-$(printf "%03d" $i)
 done
 
