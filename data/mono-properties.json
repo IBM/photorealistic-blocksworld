@@ -6,9 +6,9 @@
     "cube": 1,
     "cylinder": 1
   },
-  "colors": {
-      "gray": [128,128,128]
-  },
+  "colors": [
+      [128,128,128]
+  ],
   "materials": {
     "rubber": "Rubber"
   },

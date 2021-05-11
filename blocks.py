@@ -9,13 +9,15 @@ def load_colors(args):
     properties.update(json.load(f))
 
     # changes color value range from 0-255 to 0-1
-    properties["colors"] = {
-      name : tuple(float(c) / 255.0 for c in rgb) + (1.0,) \
-      for name, rgb in properties['colors'].items()
-    }
+    properties["colors"] = [
+      tuple(float(c) / 255.0 for c in rgb) + (1.0,) \
+      for rgb in properties['colors']
+    ]
 
     # extract exactly the same numbr of colors as the objects
-  assert len(properties["colors"].items()) >= args.num_objects
+    # from the top in the order as written in the json file
+    properties["colors"] = properties["colors"][:args.num_objects]
+
   return
 
 
@@ -31,7 +33,7 @@ class Unstackable(Exception):
 class Block(object):
   def __init__(self,i):
     shape_name, self.shape = random_dict(properties['shapes'])
-    _, self.color          = random_dict(properties['colors'])
+    self.color             = random.choice(properties['colors'])
     _, self.size           = random_dict(properties['sizes'])
     _, self.material       = random_dict(properties['materials'])
     self.rotation          = 360.0 * random.random()
