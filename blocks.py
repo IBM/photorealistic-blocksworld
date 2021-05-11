@@ -1,6 +1,24 @@
+import json
 import random
 
 properties         = {}
+
+def load_colors(args):
+  # Load the property file
+  with open(args.properties_json, 'r') as f:
+    properties.update(json.load(f))
+
+    # changes color value range from 0-255 to 0-1
+    properties["colors"] = {
+      name : tuple(float(c) / 255.0 for c in rgb) + (1.0,) \
+      for name, rgb in properties['colors'].items()
+    }
+
+    # extract exactly the same numbr of colors as the objects
+  assert len(properties["colors"].items()) >= args.num_objects
+  return
+
+
 
 def random_dict(dict):
   return random.choice(list(dict.items()))

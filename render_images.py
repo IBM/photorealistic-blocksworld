@@ -19,7 +19,7 @@ if INSIDE_BLENDER:
   try:
     import utils
     import blocks
-    from blocks import State, Unstackable
+    from blocks import State, Unstackable, load_colors
     from render_utils import render_scene
   except ImportError as e:
     print("\nERROR")
@@ -122,14 +122,7 @@ def initialize_parser():
 
 
 def main(args):
-  # Load the property file
-  with open(args.properties_json, 'r') as f:
-    blocks.properties = json.load(f)
-    blocks.properties["colors"] = {
-      name : tuple(float(c) / 255.0 for c in rgb) + (1.0,) \
-      for name, rgb in blocks.properties['colors'].items()
-    }
-  assert len(blocks.properties["colors"].items()) >= args.num_objects
+  load_colors(args)
   
   trans_img_dir   = os.path.join(args.output_dir,"image_tr")
   trans_scene_dir = os.path.join(args.output_dir,"scene_tr")
