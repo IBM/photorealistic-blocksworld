@@ -31,7 +31,7 @@ fi
 
 export objs=${1:-3}
 export steps=${2:-4}
-export num_problems=${3:-30}
+export num_problems=${3:-20}
 export gpu=${4:-true}
 export suffix=$5
 
