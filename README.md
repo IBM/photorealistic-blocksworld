@@ -113,7 +113,7 @@ To generate a dataset of 200 transitions with 3 blocks:
     ./generate_all.sh 3 200
 
 To generate a large dataset with 5 blocks / 3 stacks (>80k states=images),
-running it on a single computer would take a lot of time.
+running it on a single computer would take a long time.
 If you have access to a compute cluster, you can distribute the workload
 to the job scheduler.
 You should customize the job submission command in `generate_all.sh` for your job scheduler (e.g., Torque/PBS, Sun Grid Engine).
