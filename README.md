@@ -98,10 +98,6 @@ with np.load("path/to/blocks-3-3.npz") as data:
     bboxes      = data["bboxes"]      # uint16 array of shape [state_id, object_id, 4].
                                       # it contains the bounding box of each image patch in [x1,y1,x2,y2] format.
 
-    transitions = data["transitions"] # uint32 array of shape [transition id, 2]. 
-                                      # each transition contains two indices to `images`, 
-                                      # which represents the source and the destination state of the transition.
-
     picsize     = data["picsize"]     # an int vector of 2 elements, [maxY,maxX], containing the original image size.
 
 ```
