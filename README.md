@@ -7,7 +7,7 @@ NEWS: Now works on blender 2.80+
 
 NEWS: Random state generation (each state is randomized). Previously, a state is randomized at the beginning, but all states
 have the same objects (colors, shapes). Also, this version does not assume placing objects on a certain grid.
-To retrieve the original version (generated from a fixed environment), check out =v1= tag in git. 
+To retrieve the original version (generated from a fixed environment), check out `v1` tag in git. 
 
 This is a repository modified from the [CLEVR dataset](https://github.com/facebookresearch/clevr-dataset-gen)
 for generating realistic visualizations of [blocksworld](https://en.wikipedia.org/wiki/Blocks_world).
