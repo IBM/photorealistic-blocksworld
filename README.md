@@ -7,6 +7,7 @@ NEWS: Now works on blender 2.80+
 
 NEWS: Random state generation (each state is randomized). Previously, a state is randomized at the beginning, but all states
 have the same objects (colors, shapes). Also, this version does not assume placing objects on a certain grid.
+To retrieve the original version (generated from a fixed environment), check out =v1= tag in git. 
 
 This is a repository modified from the [CLEVR dataset](https://github.com/facebookresearch/clevr-dataset-gen)
 for generating realistic visualizations of [blocksworld](https://en.wikipedia.org/wiki/Blocks_world).
@@ -17,7 +18,6 @@ Setup:
 With anaconda,
 
 ```
-sudo apt-get install parallel jq
 conda env create -f environment.yml
 conda activate prb
 ```
@@ -116,10 +116,10 @@ To generate a large dataset with 5 blocks / 3 stacks (>80k states=images),
 running it on a single computer would take a lot of time.
 If you have access to a compute cluster, you can distribute the workload
 to the job scheduler.
-You should customize the job submission command in `generate_all.sh` for your job scheduler.
-Once you get done, run
+You should customize the job submission command in `generate_all.sh` for your job scheduler (e.g., Torque/PBS, Sun Grid Engine).
+Once customized, running the script like this will submit 4 jobs where 1000 images are distributed to each job (250 images each).
 
-    ./generate_all.sh 5 1000 true 5
+    ./generate_all.sh 5 1000 4
 
 Further customization details are available in the comment section of the script.
 
@@ -134,7 +134,7 @@ Further customization details are available in the comment section of the script
 }
 ```
 
-Relevant citation:
+Relevant citations:
 
 ``` bibtex
 @article{asai2018perminv,
@@ -142,6 +142,17 @@ Relevant citation:
 	journal = {arXiv preprint arXiv:1812.01217},
 	title = {{Set Cross Entropy: Likelihood-based Permutation Invariant Loss Function for Probability Distributions}},
 	year = {2018}
+}
+```
+
+``` bibtex
+@inproceedings{asai2019unsupervised,
+  title={Unsupervised grounding of plannable first-order logic representation from images},
+  author={Asai, Masataro},
+  booktitle={Proceedings of the International Conference on Automated Planning and Scheduling},
+  volume={29},
+  pages={583--591},
+  year={2019}
 }
 ```
 
