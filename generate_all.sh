@@ -65,6 +65,7 @@ job (){
                         --num-objects $objs      \
                         $use_gpu                 \
                         --output-dir $output_dir \
+                        --randomize-colors       \
                         --start-idx $start_idx   \
                         --num-images $num_images
     ./extract_all_regions_binary.py  --out $output_dir-objs.npz --resize 16 16 $output_dir

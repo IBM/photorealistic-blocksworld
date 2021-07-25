@@ -52,8 +52,9 @@ job (){
                         --width 150              \
                         --height 100             \
                         --num-objects $objs      \
-                        --num-steps $steps      \
+                        --num-steps $steps       \
                         $use_gpu                 \
+                        --randomize-colors       \
                         --output-dir $output_dir
     ./extract_all_regions_binary.py --as-problem --out $output_dir/objs.npz --resize 16 16 $output_dir
     ./extract_all_regions_binary.py --as-problem --out $output_dir/bgnd.npz --resize 16 16 --include-background $output_dir

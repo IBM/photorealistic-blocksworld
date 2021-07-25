@@ -15,9 +15,10 @@ def load_colors(args):
       for rgb in properties['colors']
     ]
 
-    # extract exactly the same numbr of colors as the objects
-    # from the top in the order as written in the json file
-    properties["colors"] = properties["colors"][:args.num_objects]
+    if not args.randomize_colors:
+      # extract exactly the same numbr of colors as the objects
+      # from the top in the order as written in the json file
+      properties["colors"] = properties["colors"][:args.num_objects]
 
   return
 
@@ -39,6 +40,10 @@ def initialize_parser_input_options(parser):
                       help="Directory where .blend files for object models are stored")
   parser.add_argument('--material-dir', default='data/materials',
                       help="Directory where .blend files for materials are stored")
+  parser.add_argument('--randomize-colors', action="store_true",
+                      help="Select the object color from all colors available in properties.json for each state."
+                      +" If not present, the list of colors is truncated to match the number of objects"
+                      +" during the initialization.")
   parser.add_argument('--allow-duplicates', action="store_true",
                       help="Allow duplicate objects")
 
