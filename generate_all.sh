@@ -50,7 +50,7 @@ then
 fi
   
 
-SUBMIT=${SUBMIT:-"jbsub -mem 4g -cores 1+1 -queue x86_6h -proj $proj -require k80"}
+SUBMIT=${SUBMIT:-"jbsub -mem 4g -cores 1+1 -queue x86_6h -proj $proj -require 'v100||a100'"}
 
 job (){
     output_dir=$1
