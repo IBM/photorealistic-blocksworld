@@ -233,7 +233,7 @@ class State(object):
     fail = True
     while fail and trial < 100:
       fail = False
-      oi.x = max_x * ((random.randint(0,self.table_size-1) / (self.table_size-1)) - 1/2) + random.gauss(0.0, self.object_jitter * unit)
+      oi.x = max_x * ((random.randint(0,self.table_size-1) / (self.table_size-1)) - 1/2)
       oi.z = 0
       for oj in self.objects:
         if oi.overlap(oj):
@@ -255,6 +255,14 @@ class State(object):
     if fail:
       raise Unstackable("this state is not stackable")
     pass
+
+
+  def wiggle(self):
+    """wiggles all objects by adding a jitter to the x coordinate of the objects"""
+    unit = max(properties['sizes'].values())
+    for oi in self.objects:
+      oi.x += random.gauss(0.0, self.object_jitter * unit)
+
 
   def tops(self):
     """returns a list of objects on which nothing is on top of, i.e., it is the top object of the tower."""
