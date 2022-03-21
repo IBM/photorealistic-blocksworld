@@ -55,8 +55,8 @@ def initialize_parser_environment_options(parser):
 
   parser.add_argument('--table-size', default=5, type=int,
                       help="The approximate table size relative to the large object size * 1.5.")
-  
-  parser.add_argument('--object-jitter', default=0.0, type=int,
+
+  parser.add_argument('--object-jitter', default=0.0, type=float,
                       help="The magnitude of random jitter to add to the x,y position of each block.")
 
 def initialize_parser_output_options(parser,prefix):
