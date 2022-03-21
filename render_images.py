@@ -58,26 +58,14 @@ def initialize_parser():
 
 def main(args):
   load_colors(args)
-  
-  trans_img_dir   = os.path.join(args.output_dir,"image_tr")
-  trans_scene_dir = os.path.join(args.output_dir,"scene_tr")
 
-  for d in [trans_img_dir,
-            trans_scene_dir]:
-    if not os.path.isdir(d):
-      os.makedirs(d)
+  image_prefix = os.path.join(args.output_dir,"image_tr",args.filename_prefix)
+  scene_prefix = os.path.join(args.output_dir,"scene_tr",args.filename_prefix)
+  os.makedirs(os.path.split(image_prefix)[0], exist_ok=True)
+  os.makedirs(os.path.split(scene_prefix)[0], exist_ok=True)
 
-  template = args.filename_prefix+"_%06d"
-  trans_img_template   = os.path.join(trans_img_dir,  template)
-  trans_scene_template = os.path.join(trans_scene_dir,template)
-  
   for i in range(args.start_idx,
                  args.start_idx+args.num_images):
-
-    i_pre = (trans_img_template   % i)+"_pre.png"
-    s_pre = (trans_scene_template % i)+"_pre.json"
-    i_suc = (trans_img_template   % i)+"_suc.png"
-    s_suc = (trans_scene_template % i)+"_suc.json"
 
     while True:
       try:
@@ -85,16 +73,16 @@ def main(args):
         print(json.dumps(state.for_rendering(),indent=2))
 
         render_scene(args,
-                     output_image = i_pre,
-                     output_scene = s_pre,
+                     output_image = image_prefix+"_{:06d}_pre.png".format(i),
+                     output_scene = scene_prefix+"_{:06d}_pre.json".format(i),
                      objects      = state.for_rendering())
 
         state.random_action()
         print(json.dumps(state.for_rendering(),indent=2))
 
         render_scene(args,
-                     output_image = i_suc,
-                     output_scene = s_suc,
+                     output_image = image_prefix+"_{:06d}_suc.png".format(i),
+                     output_scene = scene_prefix+"_{:06d}_suc.json".format(i),
                      objects      = state.for_rendering(),
                      action       = state.last_action)
         break
