@@ -47,8 +47,11 @@ def initialize_parser():
                       "this to non-zero values allows you to distribute rendering across " +
                       "multiple machines and recombine the results later.")
 
-  parser.add_argument('--num-images', default=100, type=int,
-                      help="The number of images to render")
+  parser.add_argument('--num-transitions', default=100, type=int,
+                      help="The number of transitions to render")
+
+  parser.add_argument('--num-samples-per-state', default=5, type=int,
+                      help="The number of images to render per logical states")
 
   # Rendering options
   blocks.initialize_parser_rendering_options(parser)
@@ -57,6 +60,7 @@ def initialize_parser():
 
 
 def main(args):
+  import copy
   load_colors(args)
 
   image_prefix = os.path.join(args.output_dir,"image_tr",args.filename_prefix)
@@ -64,27 +68,35 @@ def main(args):
   os.makedirs(os.path.split(image_prefix)[0], exist_ok=True)
   os.makedirs(os.path.split(scene_prefix)[0], exist_ok=True)
 
+  print("rendering images")
   for i in range(args.start_idx,
-                 args.start_idx+args.num_images):
+                 args.start_idx+args.num_transitions):
 
     while True:
       try:
-        state = State(args)
-        print(json.dumps(state.for_rendering(),indent=2))
+        pre = State(args)
+        print(json.dumps(pre.for_rendering(),indent=2))
 
-        render_scene(args,
-                     output_image = image_prefix+"_{:06d}_pre.png".format(i),
-                     output_scene = scene_prefix+"_{:06d}_pre.json".format(i),
-                     objects      = state.for_rendering())
+        suc = copy.deepcopy(pre)
+        suc.random_action()
+        print(json.dumps(suc.for_rendering(),indent=2))
 
-        state.random_action()
-        print(json.dumps(state.for_rendering(),indent=2))
+        for j in range(args.num_samples_per_state):
+          state = copy.deepcopy(pre)
+          state.wiggle()
+          render_scene(args,
+                       output_image = image_prefix+"_{:06d}_pre_{:03d}.png".format(i,j),
+                       output_scene = scene_prefix+"_{:06d}_pre_{:03d}.json".format(i,j),
+                       objects      = state.for_rendering())
 
-        render_scene(args,
-                     output_image = image_prefix+"_{:06d}_suc.png".format(i),
-                     output_scene = scene_prefix+"_{:06d}_suc.json".format(i),
-                     objects      = state.for_rendering(),
-                     action       = state.last_action)
+        for j in range(args.num_samples_per_state):
+          state = copy.deepcopy(suc)
+          state.wiggle()
+          render_scene(args,
+                       output_image = image_prefix+"_{:06d}_suc_{:03d}.png".format(i,j),
+                       output_scene = scene_prefix+"_{:06d}_suc_{:03d}.json".format(i,j),
+                       objects      = state.for_rendering(),
+                       action       = state.last_action)
         break
       except Unstackable as e:
         print(e)

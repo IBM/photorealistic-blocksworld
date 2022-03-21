@@ -4,7 +4,7 @@ set -e
 
 dir=$(readlink -ef $(dirname $0))
 
-parallel $dir/generate_all.sh {} 40000 50 ::: {3..7}
+parallel $dir/generate_all.sh {} 40000 3 50 ::: {3..7}
 
 echo render-cylinders-{3..7}
 watch-proj render-cylinders-{3..7}

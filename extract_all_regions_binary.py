@@ -29,7 +29,8 @@ parser.add_argument('--preprocess-mode', type=int, default=6,
                     help="")
 parser.add_argument('--resize-image', action="store_true",
                     help="When this flag is set, just resize the image and put the results in the parent directory.")
-
+parser.add_argument('--num-samples-per-state', default=5, type=int,
+                    help="The number of images to render per logical states")
 
 
 def preprocess(mode,rgb):
@@ -57,6 +58,10 @@ def preprocess(mode,rgb):
 
 
 
+def path(dir,i,presuc,j,ext):
+    return os.path.join(args.dir,dir,"CLEVR_{:06d}_{}_{}.{}".format(i,presuc,j,ext))
+
+
 def main(args):
 
     if args.resize_image:
@@ -75,12 +80,17 @@ def main(args):
         image = imageio.imread(imagefile)[:,:,:3]
         picsize = image.shape
 
+    if not args.as_problem:
+        # .../CLEVR_000000_pre_000.png
+        start_idx = int(os.path.split(imagefile)[1].split("_")[1])
+
     if args.exclude_objects:
         maxobj = 0
     if args.include_background:
         maxobj += 1
 
-    images = np.zeros((filenum, maxobj, *args.resize, 3), dtype=np.uint8)
+    images = np.zeros((filenum, *picsize), dtype=np.uint8)
+    patches = np.zeros((filenum, maxobj, *args.resize, 3), dtype=np.uint8)
     bboxes = np.zeros((filenum, maxobj, 4), dtype=np.uint16)
 
     if args.include_background:
@@ -88,6 +98,7 @@ def main(args):
         # [0,0,300,200] --- xmin,ymin,xmax,ymax
         bboxes[:,-1] = [0,0,picsize[1],picsize[0]]
 
+    print("extracting images")
     # store states
     for i,scenefile in tqdm.tqdm(enumerate(files),total=len(files)):
 
@@ -95,13 +106,16 @@ def main(args):
             scene = json.load(f)
 
         imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
-        image = img_as_float(imageio.imread(imagefile)[:,:,:3])
+        image_ubyte = imageio.imread(imagefile)[:,:,:3] # range: [0,   255]
+        image = img_as_float(image_ubyte)               # range: [0.0, 1.0]
         if args.preprocess:
             image = preprocess(args.preprocess_mode,image)
         assert(picsize==image.shape)
+        images[i] = image_ubyte
         if args.include_background:
-            # note: resize may cause numerical error that makes values exceed 0.0,1.0
-            images[i,-1] = img_as_ubyte(np.clip(skimage.transform.resize(image,(*args.resize,3)), 0.0, 1.0))
+            # note: resize may cause numerical error that makes values exceed 0.0,1.0.
+            # the value is now from 0 to 255.
+            patches[i,-1] = img_as_ubyte(np.clip(skimage.transform.resize(image,(*args.resize,3)), 0.0, 1.0))
         if args.exclude_objects:
             continue
 
@@ -110,16 +124,46 @@ def main(args):
             x1, y1, x2, y2 = bbox
             region = image[int(y1):int(y2), int(x1):int(x2), :]
             # note: resize may cause numerical error that makes values exceed 0.0,1.0
-            images[i,j] = img_as_ubyte(np.clip(skimage.transform.resize(region,(*args.resize,3)), 0.0, 1.0))
+            patches[i,j] = img_as_ubyte(np.clip(skimage.transform.resize(region,(*args.resize,3)), 0.0, 1.0))
             bboxes[i,j] = bbox
-    
-    # store transitions
-    transitions = np.arange(filenum, dtype=np.uint32)
 
     if args.as_problem:
-        save_as_problem(args.out,images,bboxes,picsize)
-    else:
-        np.savez_compressed(args.out,images=images,bboxes=bboxes,picsize=picsize,transitions=transitions)
+        save_as_problem(args.out,patches,bboxes,picsize)
+        return
+
+    print("computing means and variances")
+    samples = args.num_samples_per_state
+    num_states = filenum // samples
+    num_transitions = num_states // 2
+    images = images.reshape((num_states, samples, *picsize))
+    patches = patches.reshape((num_states, samples, maxobj, *args.resize, 3))
+    bboxes = bboxes.reshape((num_states, samples, maxobj, 4))
+    images_mean = images.mean(axis=1) # [0, 2^8-1]
+    patches_mean = patches.mean(axis=1)
+    bboxes_mean = bboxes.mean(axis=1)
+    images_std = images.std(axis=1) # [0, 2^8-1]
+    patches_std = patches.std(axis=1)
+    bboxes_std = bboxes.std(axis=1)
+    images_var = images.var(axis=1) # [0, 2^16-1]
+    patches_var = patches.var(axis=1)
+    bboxes_var = bboxes.var(axis=1)
+
+    images_mean2 = images_mean.reshape((num_transitions, 2, *picsize))
+    images_std2  = images_std.reshape((num_transitions, 2, *picsize))
+    os.makedirs(os.path.join(args.dir,"distr_tr"),exist_ok=True)
+    for i in tqdm.tqdm(range(num_transitions)):
+        for presuc,j in (("pre",0),("suc",1)):
+            imageio.imwrite(path("distr_tr",start_idx+i,presuc,"mean","png"), img_as_ubyte(images_mean2[i,j]/255))
+            imageio.imwrite(path("distr_tr",start_idx+i,presuc,"std","png"), img_as_ubyte(images_std2[i,j]/255))
+
+    np.savez_compressed(args.out,
+                        images_mean=patches_mean.astype(np.uint8),
+                        images_var=patches_var.astype(np.uint16),
+                        bboxes_mean=bboxes_mean.astype(np.uint16),
+                        bboxes_var=bboxes_var.astype(np.uint32),
+                        picsize=picsize,
+                        # store state ids
+                        transitions=np.arange(num_states, dtype=np.uint32))
     pass
 
 def save_as_problem(out,images,bboxes,picsize):

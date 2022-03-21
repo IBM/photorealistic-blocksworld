@@ -6,11 +6,13 @@ then
     cat <<EOF >&2
 
 
-    Usage: generate_all.sh [objs] [num_images] [num_jobs] [gpu] [suffix]
+    Usage: generate_all.sh [objs] [num_transitions] [num_samples_per_state] [num_jobs] [gpu] [suffix]
     
       objs:   specity the number of objects, default = 2
     
-      num_images:  The number of images to be rendered in total.
+      num_transitions:  The number of images to be rendered in total.
+
+      num_samples_per_state:  The number of images to generate for each logical state. There are jitter in the object, camera, light placemnet.
     
       num_jobs: how many jobs to use (default: 1). When the number is larger than 1, it switches to the distributed mode.
     
@@ -30,7 +32,8 @@ EOF
 fi
 
 export objs=${1:-3}         ; shift 1
-export num_images=${1:-200} ; shift 1
+export num_transitions=${1:-200} ; shift 1
+export num_samples_per_state=${1:-10} ; shift 1
 export num_jobs=${1:-1}     ; shift 1
 export gpu=${1:-true}       ; shift 1
 export suffix=$1            ; shift 1
@@ -55,7 +58,7 @@ SUBMIT=${SUBMIT:-"jbsub -mem 4g -cores 1+1 -queue x86_6h -proj $proj -require 'v
 job (){
     output_dir=$1
     start_idx=$2
-    num_images=$3
+    num_transitions=$3
     blenderdir=$(ls -d blender-2.*/ | tail -n 1)
     $blenderdir/blender -noaudio --background --python render_images.py -- \
                         --properties-json data/cylinders-properties.json \
@@ -66,12 +69,18 @@ job (){
                         $use_gpu                 \
                         --output-dir $output_dir \
                         --randomize-colors       \
+                        --key-light-jitter 1.0   \
+                        --fill-light-jitter 1.0  \
+                        --back-light-jitter 1.0  \
+                        --camera-jitter 0.5      \
+                        --object-jitter 0.1      \
                         --start-idx $start_idx   \
-                        --num-images $num_images
-    ./extract_all_regions_binary.py  --out $output_dir-objs.npz --resize 16 16 $output_dir
-    ./extract_all_regions_binary.py  --out $output_dir-bgnd.npz --resize 16 16 --include-background $output_dir
-    ./extract_all_regions_binary.py  --out $output_dir-flat.npz --resize 30 45 --include-background --exclude-objects $output_dir
-    ./extract_all_regions_binary.py  --out $output_dir-high.npz --resize 80 120 --include-background --exclude-objects $output_dir
+                        --num-transitions $num_transitions \
+                        --num-samples-per-state $num_samples_per_state
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --out $output_dir-objs.npz --resize 16 16 $output_dir
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --out $output_dir-bgnd.npz --resize 16 16 --include-background $output_dir
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --out $output_dir-flat.npz --resize 30 45 --include-background --exclude-objects $output_dir
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --out $output_dir-high.npz --resize 80 120 --include-background --exclude-objects $output_dir
 }
 
 export -f job
@@ -80,12 +89,12 @@ export SHELL=/bin/bash
 
 if $distributed
 then
-    num_images_per_job=$((num_images/num_jobs))
-    parallel "$SUBMIT job $dir/{} {} $num_images_per_job" ::: $(seq 0 $num_images_per_job $((num_images-num_images_per_job)))
+    num_transitions_per_job=$((num_transitions/num_jobs))
+    parallel "$SUBMIT job $dir/{} {} $num_transitions_per_job" ::: $(seq 0 $num_transitions_per_job $((num_transitions-num_transitions_per_job)))
     echo "Run the following command when all jobs have finished:"
     echo "./merge-npz.py --out $dir-objs.npz $dir/*-objs.npz"
     echo "./merge-npz.py --out $dir-bgnd.npz $dir/*-bgnd.npz"
     echo "./merge-npz.py --out $dir-flat.npz $dir/*-flat.npz"
 else
-    job $dir 0 $num_images
+    job $dir 0 $num_transitions
 fi

@@ -11,8 +11,11 @@ parser.add_argument('npzs', nargs="+", help="list of npz files to be merged.")
 
 args = parser.parse_args()
 
-_images = []
-_bboxes = []
+print("merging npzs")
+_images_mean = []
+_images_var = []
+_bboxes_mean = []
+_bboxes_var = []
 _transitions = []
 
 with np.load(args.npzs[0]) as data:
@@ -21,18 +24,23 @@ with np.load(args.npzs[0]) as data:
 count = 0
 for npz in tqdm.tqdm(args.npzs):
     with np.load(npz) as data:
-        l = len(data["images"])
+        l = len(data["images_mean"])
         if (l % 2) != 0:
-            print(f"This run is terminated prematurely! number of images == {l}")
+            print(f"This run is terminated prematurely! number of images == {l} must be even. Discarding the final data point.")
             l -= 1
 
-        _images.append(data["images"][:l])
-        _bboxes.append(data["bboxes"][:l])
-        _transitions.append(data["transitions"][:l]+count)
+        # [:l] ignores the final data point when the dataset contains an odd number of elements
+        _images_mean.append(data["images_mean"][:l])
+        _images_var.append(data["images_var"][:l])
+        _bboxes_mean.append(data["bboxes_mean"][:l])
+        _bboxes_var.append(data["bboxes_var"][:l])
+        _transitions.append(data["transitions"][:l]+count) # shift the state id
         count += l
 
 np.savez_compressed(args.out,
-                    images=np.concatenate(_images,axis=0),
-                    bboxes=np.concatenate(_bboxes,axis=0),
+                    images_mean=np.concatenate(_images_mean,axis=0),
+                    images_var=np.concatenate(_images_var,axis=0),
+                    bboxes_mean=np.concatenate(_bboxes_mean,axis=0),
+                    bboxes_var=np.concatenate(_bboxes_var,axis=0),
                     picsize=picsize,
                     transitions=np.concatenate(_transitions,axis=0))
