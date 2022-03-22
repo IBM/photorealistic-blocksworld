@@ -7,7 +7,7 @@
 
 from __future__ import print_function
 import sys, argparse, json, os
-  
+
 INSIDE_BLENDER = True
 try:
   import bpy, bpy_extras
@@ -22,7 +22,7 @@ if INSIDE_BLENDER:
     from render_utils import render_scene
   except ImportError as e:
     print("\nERROR")
-    print("Running render_images.py from Blender and cannot import utils.py.") 
+    print("Running render_images.py from Blender and cannot import utils.py.")
     print("You may need to add a .pth file to the site-packages of Blender's")
     print("bundled python with a command like this:\n")
     print("echo $PWD >> $BLENDER/$VERSION/python/lib/python3.5/site-packages/clevr.pth")
@@ -38,7 +38,7 @@ def initialize_parser():
 
   # Environment options
   blocks.initialize_parser_environment_options(parser)
-  
+
   # Output settings
   blocks.initialize_parser_output_options(parser,prefix='CLEVR')
 
@@ -46,10 +46,10 @@ def initialize_parser():
                       help="The index at which to start for numbering rendered images. Setting " +
                       "this to non-zero values allows you to distribute rendering across " +
                       "multiple machines and recombine the results later.")
+
   parser.add_argument('--num-images', default=100, type=int,
                       help="The number of images to render")
-  
-  
+
   # Rendering options
   blocks.initialize_parser_rendering_options(parser)
 

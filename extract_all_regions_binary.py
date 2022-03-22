@@ -90,7 +90,7 @@ def main(args):
 
     # store states
     for i,scenefile in tqdm.tqdm(enumerate(files),total=len(files)):
-        
+
         with open(os.path.join(scenes,scenefile), 'r') as f:
             scene = json.load(f)
 
@@ -137,6 +137,8 @@ def save_as_problem(out,images,bboxes,picsize):
     init,goal = states
     np.savez_compressed(out,init=init,goal=goal,picsize=picsize)
 
+
+
 def save_as_resize(args):
     for name in ["init.png", "goal.png"]:
         imagefile = os.path.join(args.dir,"image_tr",name)
@@ -145,10 +147,11 @@ def save_as_resize(args):
         imageio.imwrite(os.path.join(args.dir,name), image)
     pass
 
+
 if __name__ == '__main__':
     import sys
     args = parser.parse_args()
     main(args)
 
-    
-        
+
+
