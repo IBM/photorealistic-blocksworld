@@ -59,18 +59,23 @@ def initialize_parser():
   return parser
 
 
+def path(dir,i,presuc,j,ext):
+    return os.path.join(args.output_dir,dir,"CLEVR_{:06d}_{}_{:03d}.{}".format(i,presuc,j,ext))
+
+
 def main(args):
   import copy
   load_colors(args)
 
-  image_prefix = os.path.join(args.output_dir,"image_tr",args.filename_prefix)
-  scene_prefix = os.path.join(args.output_dir,"scene_tr",args.filename_prefix)
-  os.makedirs(os.path.split(image_prefix)[0], exist_ok=True)
-  os.makedirs(os.path.split(scene_prefix)[0], exist_ok=True)
+  os.makedirs(os.path.join(args.output_dir,"image_tr"), exist_ok=True)
+  os.makedirs(os.path.join(args.output_dir,"scene_tr"), exist_ok=True)
 
   print("rendering images")
   for i in range(args.start_idx,
                  args.start_idx+args.num_transitions):
+
+    if os.path.exists(path("image_tr",i,"suc",args.num_samples_per_state-1,"png")):
+      continue
 
     while True:
       try:
@@ -85,16 +90,16 @@ def main(args):
           state = copy.deepcopy(pre)
           state.wiggle()
           render_scene(args,
-                       output_image = image_prefix+"_{:06d}_pre_{:03d}.png".format(i,j),
-                       output_scene = scene_prefix+"_{:06d}_pre_{:03d}.json".format(i,j),
+                       output_image = path("image_tr",i,"pre",j,"png"),
+                       output_scene = path("scene_tr",i,"pre",j,"json"),
                        objects      = state.for_rendering())
 
         for j in range(args.num_samples_per_state):
           state = copy.deepcopy(suc)
           state.wiggle()
           render_scene(args,
-                       output_image = image_prefix+"_{:06d}_suc_{:03d}.png".format(i,j),
-                       output_scene = scene_prefix+"_{:06d}_suc_{:03d}.json".format(i,j),
+                       output_image = path("image_tr",i,"suc",j,"png"),
+                       output_scene = path("scene_tr",i,"suc",j,"json"),
                        objects      = state.for_rendering(),
                        action       = state.last_action)
         break
