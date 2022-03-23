@@ -6,7 +6,7 @@ import tqdm
 
 parser = argparse.ArgumentParser(description='merge npz files.')
 
-parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz', help="output npz pathname.")
+parser.add_argument('--out', default='regions.npz', help="output npz pathname.")
 parser.add_argument('npzs', nargs="+", help="list of npz files to be merged.")
 
 args = parser.parse_args()
@@ -37,10 +37,12 @@ for npz in tqdm.tqdm(args.npzs):
         _transitions.append(data["transitions"][:l]+count) # shift the state id
         count += l
 
-np.savez_compressed(args.out,
-                    images_mean=np.concatenate(_images_mean,axis=0),
-                    images_var=np.concatenate(_images_var,axis=0),
-                    bboxes_mean=np.concatenate(_bboxes_mean,axis=0),
-                    bboxes_var=np.concatenate(_bboxes_var,axis=0),
-                    picsize=picsize,
-                    transitions=np.concatenate(_transitions,axis=0))
+with open(args.out, mode="w+b") as f:
+    np.savez_compressed(f,
+                        images_mean=np.concatenate(_images_mean,axis=0),
+                        images_var=np.concatenate(_images_var,axis=0),
+                        bboxes_mean=np.concatenate(_bboxes_mean,axis=0),
+                        bboxes_var=np.concatenate(_bboxes_var,axis=0),
+                        picsize=picsize,
+                        transitions=np.concatenate(_transitions,axis=0))
+    f.truncate()

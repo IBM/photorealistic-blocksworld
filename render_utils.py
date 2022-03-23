@@ -141,8 +141,9 @@ def render_scene(args,
     except Exception as e:
       print(e)
 
-  with open(output_scene, 'w') as f:
+  with open(output_scene, 'w+') as f:
     json.dump(scene_struct, f, indent=2)
+    f.truncate()
 
   if output_blendfile is not None:
     bpy.ops.wm.save_as_mainfile(filepath=output_blendfile)

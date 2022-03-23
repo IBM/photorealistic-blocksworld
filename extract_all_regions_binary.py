@@ -14,7 +14,7 @@ import tqdm
 parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
-parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
+parser.add_argument('--out', default='regions.npz')
 parser.add_argument('--resize', type=int, default=(32,32), nargs=2, metavar=("Y","X"),
                     help="the size of the image patch resized from the region originally extracted")
 parser.add_argument('--exclude-objects', action='store_true',
@@ -62,6 +62,24 @@ def path(dir,i,presuc,j,ext):
     return os.path.join(args.dir,dir,"CLEVR_{:06d}_{}_{}.{}".format(i,presuc,j,ext))
 
 
+def safe_load_json(path):
+    with open(path, 'r+') as f:
+        try:
+            return json.load(f)
+        except json.decoder.JSONDecodeError as e:
+            # HACK HACK: temporary solution to ignore extraneous data at the end of file
+            # caused by open(path, "w") instead of open(path, "w+").
+            # Seek it back the beginning of file, read a string until the errored position, then parse it
+            print("while parsing", path, ":")
+            print(e)
+            f.seek(0)
+            obj = json.loads(f.read(e.pos))
+            print("truncating",path)
+            f.seek(e.pos)
+            f.truncate()
+            return obj
+
+
 def main(args):
 
     if args.resize_image:
@@ -73,12 +91,11 @@ def main(args):
     files.sort()
     filenum = len(files)
 
-    with open(os.path.join(scenes,files[0]), 'r') as f:
-        scene = json.load(f)
-        maxobj = len(scene["objects"])
-        imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
-        image = imageio.imread(imagefile)[:,:,:3]
-        picsize = image.shape
+    scene = safe_load_json(os.path.join(scenes,files[0]))
+    maxobj = len(scene["objects"])
+    imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
+    image = imageio.imread(imagefile)[:,:,:3]
+    picsize = image.shape
 
     if not args.as_problem:
         # .../CLEVR_000000_pre_000.png
@@ -102,8 +119,7 @@ def main(args):
     # store states
     for i,scenefile in tqdm.tqdm(enumerate(files),total=len(files)):
 
-        with open(os.path.join(scenes,scenefile), 'r') as f:
-            scene = json.load(f)
+        scene = safe_load_json(os.path.join(scenes,scenefile))
 
         imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
         image_ubyte = imageio.imread(imagefile)[:,:,:3] # range: [0,   255]
@@ -156,14 +172,16 @@ def main(args):
             imageio.imwrite(path("distr_tr",start_idx+i,presuc,"mean","png"), img_as_ubyte(images_mean2[i,j]/255))
             imageio.imwrite(path("distr_tr",start_idx+i,presuc,"std","png"), img_as_ubyte(images_std2[i,j]/255))
 
-    np.savez_compressed(args.out,
-                        images_mean=patches_mean.astype(np.uint8),
-                        images_var=patches_var.astype(np.uint16),
-                        bboxes_mean=bboxes_mean.astype(np.uint16),
-                        bboxes_var=bboxes_var.astype(np.uint32),
-                        picsize=picsize,
-                        # store state ids
-                        transitions=np.arange(num_states, dtype=np.uint32))
+    with open(args.out, mode="w+b") as f:
+        np.savez_compressed(f,
+                            images_mean=patches_mean.astype(np.uint8),
+                            images_var=patches_var.astype(np.uint16),
+                            bboxes_mean=bboxes_mean.astype(np.uint16),
+                            bboxes_var=bboxes_var.astype(np.uint32),
+                            picsize=picsize,
+                            # store state ids
+                            transitions=np.arange(num_states, dtype=np.uint32))
+        f.truncate()
     pass
 
 def save_as_problem(out,images,bboxes,picsize):
