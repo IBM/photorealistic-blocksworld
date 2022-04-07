@@ -29,11 +29,12 @@ EOF
     exit 1
 fi
 
-export objs=${1:-3}
-export steps=${2:-4}
-export num_problems=${3:-20}
-export gpu=${4:-true}
-export suffix=$5
+export objs=${1:-3} ; shift 1
+export steps=${1:-4} ; shift 1
+export num_problems=${1:-20} ; shift 1
+export num_samples_per_state=${1:-10} ; shift 1
+export gpu=${1:-true} ; shift 1
+export suffix=$1 ; shift 1
 
 export dir="prob-cylinders-$objs$suffix"
 export proj=$(date +%Y%m%d%H%M)-render-$dir
@@ -54,12 +55,19 @@ job (){
                         --num-objects $objs      \
                         --num-steps $steps       \
                         $use_gpu                 \
+                        --output-dir $output_dir \
                         --randomize-colors       \
-                        --output-dir $output_dir
-    ./extract_all_regions_binary.py --as-problem --out $output_dir/objs.npz --resize 16 16 $output_dir
-    ./extract_all_regions_binary.py --as-problem --out $output_dir/bgnd.npz --resize 16 16 --include-background $output_dir
-    ./extract_all_regions_binary.py --as-problem --out $output_dir/flat.npz --resize 30 45 --include-background --exclude-objects $output_dir
-    ./extract_all_regions_binary.py --as-problem --out $output_dir/high.npz --resize 80 120 --include-background --exclude-objects $output_dir
+                        --key-light-jitter 1.0   \
+                        --fill-light-jitter 1.0  \
+                        --back-light-jitter 1.0  \
+                        --camera-jitter 0.5      \
+                        --object-jitter 0.1      \
+                        --num-transitions 1 \
+                        --num-samples-per-state $num_samples_per_state
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/objs.npz --resize 16 16 $output_dir
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/bgnd.npz --resize 16 16 --include-background $output_dir
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/flat.npz --resize 30 45 --include-background --exclude-objects $output_dir
+    ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/high.npz --resize 80 120 --include-background --exclude-objects $output_dir
     ./extract_all_regions_binary.py --resize-image --resize 30 45 $output_dir
 }
 
