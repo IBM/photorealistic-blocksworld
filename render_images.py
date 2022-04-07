@@ -53,6 +53,9 @@ def initialize_parser():
   parser.add_argument('--num-samples-per-state', default=5, type=int,
                       help="The number of images to render per logical states")
 
+  parser.add_argument('--num-steps', default=1, type=int,
+                      help="The number of steps to perform from the source state")
+
   # Rendering options
   blocks.initialize_parser_rendering_options(parser)
 
@@ -83,8 +86,9 @@ def main(args):
         print(json.dumps(pre.for_rendering(),indent=2))
 
         suc = copy.deepcopy(pre)
-        suc.random_action()
-        print(json.dumps(suc.for_rendering(),indent=2))
+        for j in range(args.num_steps):
+          suc.random_action()
+          print(json.dumps(suc.for_rendering(),indent=2))
 
         for j in range(args.num_samples_per_state):
           state = copy.deepcopy(pre)

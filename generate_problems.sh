@@ -47,7 +47,7 @@ fi
 job (){
     output_dir=$1
     blenderdir=$(ls -d blender-2.*/ | tail -n 1)
-    $blenderdir/blender -noaudio --background --python render_problem.py -- \
+    $blenderdir/blender -noaudio --background --python render_images.py -- \
                         --properties-json data/cylinders-properties.json \
                         --render-num-samples 150 \
                         --width 150              \
@@ -68,7 +68,6 @@ job (){
     ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/bgnd.npz --resize 16 16 --include-background $output_dir
     ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/flat.npz --resize 30 45 --include-background --exclude-objects $output_dir
     ./extract_all_regions_binary.py --num-samples-per-state $num_samples_per_state --as-problem --out $output_dir/high.npz --resize 80 120 --include-background --exclude-objects $output_dir
-    ./extract_all_regions_binary.py --resize-image --resize 30 45 $output_dir
 }
 
 for i in $(seq $num_problems)

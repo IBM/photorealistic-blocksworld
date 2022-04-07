@@ -27,8 +27,6 @@ parser.add_argument('--preprocess', action='store_true',
                     help="Normalize the image using histogram normalization (images are converted to ycbcr, y channel is normalzied, then put back to rgb.")
 parser.add_argument('--preprocess-mode', type=int, default=6,
                     help="")
-parser.add_argument('--resize-image', action="store_true",
-                    help="When this flag is set, just resize the image and put the results in the parent directory.")
 parser.add_argument('--num-samples-per-state', default=5, type=int,
                     help="The number of images to render per logical states")
 
@@ -82,10 +80,6 @@ def safe_load_json(path):
 
 def main(args):
 
-    if args.resize_image:
-        save_as_resize(args)
-        return
-
     scenes=os.path.join(args.dir,"scene_tr")
     files = os.listdir(scenes)
     files.sort()
@@ -97,9 +91,8 @@ def main(args):
     image = imageio.imread(imagefile)[:,:,:3]
     picsize = image.shape
 
-    if not args.as_problem:
-        # .../CLEVR_000000_pre_000.png
-        start_idx = int(os.path.split(imagefile)[1].split("_")[1])
+    # .../CLEVR_XXXXXX_pre_YYY.png -> XXXXXX
+    start_idx = int(os.path.split(imagefile)[1].split("_")[1])
 
     if args.exclude_objects:
         maxobj = 0
@@ -143,10 +136,6 @@ def main(args):
             patches[i,j] = img_as_ubyte(np.clip(skimage.transform.resize(region,(*args.resize,3)), 0.0, 1.0))
             bboxes[i,j] = bbox
 
-    if args.as_problem:
-        save_as_problem(args.out,patches,bboxes,picsize)
-        return
-
     print("computing means and variances")
     samples = args.num_samples_per_state
     num_states = filenum // samples
@@ -172,8 +161,27 @@ def main(args):
             imageio.imwrite(path("distr_tr",start_idx+i,presuc,"mean","png"), img_as_ubyte(images_mean2[i,j]/255))
             imageio.imwrite(path("distr_tr",start_idx+i,presuc,"std","png"), img_as_ubyte(images_std2[i,j]/255))
 
-    with open(args.out, mode="w+b") as f:
+    if args.as_problem:
+        save_as = save_as_problem
+    else:
+        save_as = save_as_dataset
+    save_as(args.out,samples,num_states,num_transitions,
+            patches_mean,patches_var,
+            bboxes_mean,bboxes_var,
+            picsize)
+
+    pass
+
+def save_as_dataset(out,
+                    samples,num_states,num_transitions,
+                    patches_mean,patches_var,
+                    bboxes_mean,bboxes_var,
+                    picsize):
+
+    with open(out, mode="w+b") as f:
         np.savez_compressed(f,
+                            # note: the name mismatch (images vs patches) is not a mistake,
+                            # an artifact of history of changes.
                             images_mean=patches_mean.astype(np.uint8),
                             images_var=patches_var.astype(np.uint16),
                             bboxes_mean=bboxes_mean.astype(np.uint16),
@@ -182,32 +190,44 @@ def main(args):
                             # store state ids
                             transitions=np.arange(num_states, dtype=np.uint32))
         f.truncate()
-    pass
 
-def save_as_problem(out,images,bboxes,picsize):
-    assert len(images) == 2
-    def bboxes_to_coord(bboxes):
-        coord1, coord2 = bboxes[:,:,0:2], bboxes[:,:,2:4]
-        center, width = (coord2+coord1)/2, (coord2-coord1)/2
-        coords        = np.concatenate((center,width),axis=-1)
-        return coords
 
-    B,O,H,W,C = images.shape
-    states = images.reshape((B,O,H*W*C)) / 256
-    coords = bboxes_to_coord(bboxes)
-    states = np.concatenate((states,coords),axis=-1)
+def save_as_problem(out,
+                    samples,num_states,num_transitions,
+                    patches_mean,patches_var,
+                    bboxes_mean,bboxes_var,
+                    picsize):
+
+    B,O,H,W,C = patches_mean.shape
+    patches_mean = patches_mean.reshape((B,O,H*W*C)) / 255
+    patches_var  = patches_var.reshape((B,O,H*W*C)) / (255*255)
+    coords_mean = bboxes_to_coord(bboxes_mean,"mean")
+    coords_var = bboxes_to_coord(bboxes_var,"variance")
+    states_mean = np.concatenate((patches_mean,coords_mean),axis=-1)
+    states_var = np.concatenate((patches_var,coords_var),axis=-1)
+    states = np.concatenate((states_mean,states_var),axis=-1)
     init,goal = states
-    np.savez_compressed(out,init=init,goal=goal,picsize=picsize)
+    with open(out, mode="w+b") as f:
+        np.savez_compressed(f,init=init,goal=goal,picsize=picsize)
+        f.truncate()
 
 
 
-def save_as_resize(args):
-    for name in ["init.png", "goal.png"]:
-        imagefile = os.path.join(args.dir,"image_tr",name)
-        image = img_as_float(imageio.imread(imagefile)[:,:,:3])
-        image = img_as_ubyte(np.clip(skimage.transform.resize(image,(*args.resize,3)), 0.0, 1.0))
-        imageio.imwrite(os.path.join(args.dir,name), image)
-    pass
+def bboxes_to_coord(bboxes,mode="mean"):
+    assert mode in ("mean", "variance")
+    if mode == "mean":
+        coord1, coord2 = bboxes[...,0:2], bboxes[...,2:4]
+        center, width = (coord2+coord1)/2, (coord2-coord1)/2
+        return np.concatenate((center,width),axis=-1)
+    else:
+        # Var(-X) == Var(X)
+        # Var(X+Y) == Var(X) + Var(Y) for independent variables
+        # Var(aX) == a^2 Var(X)
+        # so Var(X+Y / 2) = Var(X)+Var(Y) / 4
+        coord1, coord2 = bboxes[...,0:2], bboxes[...,2:4]
+        center, width = (coord2+coord1)/4, (coord2+coord1)/4
+        return np.concatenate((center,width),axis=-1)
+
 
 
 if __name__ == '__main__':
