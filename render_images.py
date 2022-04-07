@@ -50,7 +50,7 @@ def initialize_parser():
   parser.add_argument('--num-transitions', default=100, type=int,
                       help="The number of transitions to render")
 
-  parser.add_argument('--num-samples-per-state', default=5, type=int,
+  parser.add_argument('--num-samples-per-state', default=3, type=int,
                       help="The number of images to render per logical states")
 
   parser.add_argument('--num-steps', default=1, type=int,

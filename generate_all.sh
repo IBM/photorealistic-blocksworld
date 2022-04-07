@@ -33,7 +33,7 @@ fi
 
 export objs=${1:-3}         ; shift 1
 export num_transitions=${1:-200} ; shift 1
-export num_samples_per_state=${1:-10} ; shift 1
+export num_samples_per_state=${1:-3} ; shift 1
 export num_jobs=${1:-1}     ; shift 1
 export gpu=${1:-true}       ; shift 1
 export suffix=$1            ; shift 1

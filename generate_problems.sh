@@ -32,7 +32,7 @@ fi
 export objs=${1:-3} ; shift 1
 export steps=${1:-4} ; shift 1
 export num_problems=${1:-20} ; shift 1
-export num_samples_per_state=${1:-10} ; shift 1
+export num_samples_per_state=${1:-3} ; shift 1
 export gpu=${1:-true} ; shift 1
 export suffix=$1 ; shift 1
 
