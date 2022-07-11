@@ -14,7 +14,7 @@ import tqdm
 parser = argparse.ArgumentParser(
     description='extract the regions and save the results in a npz file.')
 parser.add_argument('dir')
-parser.add_argument('--out', default='regions.npz')
+parser.add_argument('--out', type=argparse.FileType('wb'), default='regions.npz')
 parser.add_argument('--resize', type=int, default=(32,32), nargs=2, metavar=("Y","X"),
                     help="the size of the image patch resized from the region originally extracted")
 parser.add_argument('--exclude-objects', action='store_true',
@@ -172,27 +172,26 @@ def main(args):
 
     pass
 
-def save_as_dataset(out,
+def save_as_dataset(f,
                     samples,num_states,num_transitions,
                     patches_mean,patches_var,
                     bboxes_mean,bboxes_var,
                     picsize):
 
-    with open(out, mode="w+b") as f:
-        np.savez_compressed(f,
-                            # note: the name mismatch (images vs patches) is not a mistake,
-                            # an artifact of history of changes.
-                            images_mean=patches_mean.astype(np.uint8),
-                            images_var=patches_var.astype(np.uint16),
-                            bboxes_mean=bboxes_mean.astype(np.uint16),
-                            bboxes_var=bboxes_var.astype(np.uint32),
-                            picsize=picsize,
-                            # store state ids
-                            transitions=np.arange(num_states, dtype=np.uint32))
-        f.truncate()
+    np.savez_compressed(f,
+                        # note: the name mismatch (images vs patches) is not a mistake,
+                        # an artifact of history of changes.
+                        images_mean=patches_mean.astype(np.uint8),
+                        images_var=patches_var.astype(np.uint16),
+                        bboxes_mean=bboxes_mean.astype(np.uint16),
+                        bboxes_var=bboxes_var.astype(np.uint32),
+                        picsize=picsize,
+                        # store state ids
+                        transitions=np.arange(num_states, dtype=np.uint32))
+    f.truncate()
 
 
-def save_as_problem(out,
+def save_as_problem(f,
                     samples,num_states,num_transitions,
                     patches_mean,patches_var,
                     bboxes_mean,bboxes_var,
@@ -207,9 +206,8 @@ def save_as_problem(out,
     states_var = np.concatenate((patches_var,coords_var),axis=-1)
     states = np.concatenate((states_mean,states_var),axis=-1)
     init,goal = states
-    with open(out, mode="w+b") as f:
-        np.savez_compressed(f,init=init,goal=goal,picsize=picsize)
-        f.truncate()
+    np.savez_compressed(f,init=init,goal=goal,picsize=picsize)
+    f.truncate()
 
 
 
