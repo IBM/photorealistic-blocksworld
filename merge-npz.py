@@ -19,7 +19,9 @@ _bboxes_var = []
 _transitions = []
 
 with np.load(args.npzs[0]) as data:
-    picsize = data['picsize']
+    picsize               = data['picsize']
+    patch_shape           = data['patch_shape']
+    num_samples_per_state = data['num_samples_per_state']
 
 count = 0
 for npz in tqdm.tqdm(args.npzs):
@@ -44,5 +46,7 @@ np.savez_compressed(args.out,
                     bboxes_mean=np.concatenate(_bboxes_mean,axis=0),
                     bboxes_var=np.concatenate(_bboxes_var,axis=0),
                     picsize=picsize,
+                    patch_shape=patch_shape,
+                    num_samples_per_state=num_samples_per_state,
                     transitions=np.concatenate(_transitions,axis=0))
 args.out.truncate()

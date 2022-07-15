@@ -165,33 +165,36 @@ def main(args):
         save_as = save_as_problem
     else:
         save_as = save_as_dataset
-    save_as(args.out,samples,num_states,num_transitions,
+    save_as(args,samples,num_states,num_transitions,
             patches_mean,patches_var,
             bboxes_mean,bboxes_var,
             picsize)
 
     pass
 
-def save_as_dataset(f,
+def save_as_dataset(args,
                     samples,num_states,num_transitions,
                     patches_mean,patches_var,
                     bboxes_mean,bboxes_var,
                     picsize):
 
-    np.savez_compressed(f,
+    np.savez_compressed(args.out,
                         # note: the name mismatch (images vs patches) is not a mistake,
                         # an artifact of history of changes.
                         images_mean=patches_mean.astype(np.uint8),
                         images_var=patches_var.astype(np.uint16),
                         bboxes_mean=bboxes_mean.astype(np.uint16),
                         bboxes_var=bboxes_var.astype(np.uint32),
+                        # metadata
                         picsize=picsize,
+                        patch_shape=[*args.resize,3],
+                        num_samples_per_state=args.num_samples_per_state,
                         # store state ids
                         transitions=np.arange(num_states, dtype=np.uint32))
-    f.truncate()
+    args.out.truncate()
 
 
-def save_as_problem(f,
+def save_as_problem(args,
                     samples,num_states,num_transitions,
                     patches_mean,patches_var,
                     bboxes_mean,bboxes_var,
@@ -206,8 +209,14 @@ def save_as_problem(f,
     states_var = np.concatenate((patches_var,coords_var),axis=-1)
     states = np.concatenate((states_mean,states_var),axis=-1)
     init,goal = states
-    np.savez_compressed(f,init=init,goal=goal,picsize=picsize)
-    f.truncate()
+    np.savez_compressed(args.out,
+                        init=init,
+                        goal=goal,
+                        # metadata
+                        picsize=picsize,
+                        patch_shape=[*args.resize,3],
+                        num_samples_per_state=args.num_samples_per_state,)
+    args.out.truncate()
 
 
 
