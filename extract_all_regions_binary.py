@@ -91,8 +91,7 @@ def main(args):
     scene = safe_load_json(os.path.join(scenes,files[0]))
     maxobj = len(scene["objects"])
     imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
-    image = imageio.imread(imagefile)[:,:,:3]
-    picsize = image.shape
+    picsize = imageio.imread(imagefile)[:,:,:3].shape
 
     # .../CLEVR_XXXXXX_pre_YYY.png -> XXXXXX
     start_idx = int(os.path.split(imagefile)[1].split("_")[1])
