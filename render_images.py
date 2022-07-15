@@ -63,7 +63,11 @@ def initialize_parser():
 
 
 def path(dir,i,presuc,j,ext):
-    return os.path.join(args.output_dir,dir,"CLEVR_{:06d}_{}_{:03d}.{}".format(i,presuc,j,ext))
+  if isinstance(i, int):
+    i = "{:06d}".format(i)
+  if isinstance(j, int):
+    j = "{:03d}".format(j)
+  return os.path.join(args.output_dir,dir,"_".join(["CLEVR",i,presuc,j])+"."+ext)
 
 
 def main(args):
@@ -77,20 +81,33 @@ def main(args):
   for i in range(args.start_idx,
                  args.start_idx+args.num_transitions):
 
-    if os.path.exists(path("image_tr",i,"suc",args.num_samples_per_state-1,"png")):
-      continue
-
     while True:
       try:
-        pre = State(args)
-        print(json.dumps(pre.for_rendering(),indent=2))
+        # by default, save the noiseless states into json.
+        # if we want to extend the number of samples, load these fils and performs a wiggle.
+        if os.path.exists(path("scene_tr",i,"pre","---","json")):
+          assert os.path.exists(path("scene_tr",i,"suc","---","json"))
+          with open(path("scene_tr",i,"pre","---","json"),"r") as f:
+            pre = json.load(f)
+          with open(path("scene_tr",i,"suc","---","json"),"r") as f:
+            suc = json.load(f)
+        else:
+          assert not os.path.exists(path("scene_tr",i,"suc","---","json"))
+          pre = State(args)
+          suc = copy.deepcopy(pre)
+          for j in range(args.num_steps):
+            suc.random_action()
 
-        suc = copy.deepcopy(pre)
-        for j in range(args.num_steps):
-          suc.random_action()
-          print(json.dumps(suc.for_rendering(),indent=2))
+          with open(path("scene_tr",i,"pre","---","json"),"w") as f:
+            json.dump(pre.for_rendering(),f)
+            f.truncate()
+          with open(path("scene_tr",i,"suc","---","json"),"w") as f:
+            json.dump(suc.for_rendering(),f)
+            f.truncate()
 
         for j in range(args.num_samples_per_state):
+          if os.path.exists(path("image_tr",i,"pre",j,"png")):
+            continue
           state = copy.deepcopy(pre)
           state.wiggle()
           render_scene(args,
@@ -99,6 +116,8 @@ def main(args):
                        objects      = state.for_rendering())
 
         for j in range(args.num_samples_per_state):
+          if os.path.exists(path("image_tr",i,"suc",j,"png")):
+            continue
           state = copy.deepcopy(suc)
           state.wiggle()
           render_scene(args,

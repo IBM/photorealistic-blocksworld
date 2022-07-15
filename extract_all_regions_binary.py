@@ -81,7 +81,7 @@ def safe_load_json(path):
 def main(args):
 
     scenes=os.path.join(args.dir,"scene_tr")
-    files = os.listdir(scenes)
+    files = [ f for f in os.listdir(scenes) if "---" not in f ]
     files.sort()
     filenum = len(files)
 
