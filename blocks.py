@@ -115,6 +115,49 @@ def random_dict(dict):
   return random.choice(list(dict.items()))
 
 
+
+def dump(obj):
+  def rec(obj):
+    if hasattr(obj, "__dict__"):
+      res = {
+        k : rec(v)
+        for k, v in vars(obj).items()
+      }
+      res["__class__"] = obj.__class__.__name__
+      return res
+    elif isinstance(obj, dict):
+      return {k:rec(v) for k,v in obj.items()}
+    elif isinstance(obj, list):
+      return list(rec(v) for v in obj)
+    elif isinstance(obj, tuple):
+      return list(rec(v) for v in obj)
+    else:
+      return obj
+  return rec(obj)
+
+# a = A() ; a.b=1 ; a.c="2" ; a.d=1.1 ; a.e=A() ; a.e.b=3 ; a.f = [2, A()] ; a.g = {"a": A()} ; a.h = (2, A()) ;
+# dump(a)
+# dump(undump(dump(a)))
+
+def undump(obj):
+  def rec(obj):
+    if isinstance(obj, dict):
+      if "__class__" in obj:
+        cls = eval(obj["__class__"])
+        res = cls.__new__(cls)
+        for k, v in obj.items():
+          if k != "__class__":
+            vars(res)[k] = rec(v)
+        return res
+      else:
+        return { k: rec(v) for k,v in obj.items() }
+    if isinstance(obj, list):
+      return list(rec(v) for v in obj)
+    else:
+      return obj
+  return rec(obj)
+
+
 class Unstackable(Exception):
   pass
 
@@ -210,6 +253,13 @@ class State(object):
 
   def for_rendering(self):
     return [ vars(o) for o in sorted(self.objects, key=(lambda o: o.id)) ]
+
+  def dump(self):
+    return dump(self)
+
+  @staticmethod
+  def undump(data):
+    return undump(data)
 
   def shuffle(self):
     """destructively modify the list of objects using shuffle1."""

@@ -88,9 +88,9 @@ def main(args):
         if os.path.exists(path("scene_tr",i,"pre","---","json")):
           assert os.path.exists(path("scene_tr",i,"suc","---","json"))
           with open(path("scene_tr",i,"pre","---","json"),"r") as f:
-            pre = json.load(f)
+            pre = State.undump(json.load(f))
           with open(path("scene_tr",i,"suc","---","json"),"r") as f:
-            suc = json.load(f)
+            suc = State.undump(json.load(f))
         else:
           assert not os.path.exists(path("scene_tr",i,"suc","---","json"))
           pre = State(args)
@@ -99,11 +99,20 @@ def main(args):
             suc.random_action()
 
           with open(path("scene_tr",i,"pre","---","json"),"w") as f:
-            json.dump(pre.for_rendering(),f)
+            json.dump(pre.dump(),f,indent=2)
             f.truncate()
           with open(path("scene_tr",i,"suc","---","json"),"w") as f:
-            json.dump(suc.for_rendering(),f)
+            json.dump(suc.dump(),f,indent=2)
             f.truncate()
+          # print("dump success: ", json.dumps(pre.dump(),indent=2))
+          # print("loading")
+          # with open(path("scene_tr",i,"pre","---","json"),"r") as f:
+          #   pre2 = State.undump(json.load(f))
+          # with open(path("scene_tr",i,"suc","---","json"),"r") as f:
+          #   suc2 = State.undump(json.load(f))
+          # print("loaded data: ", json.dumps(pre.dump(),indent=2))
+          #
+          # 1/0
 
         for j in range(args.num_samples_per_state):
           if os.path.exists(path("image_tr",i,"pre",j,"png")):
