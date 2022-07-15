@@ -14,8 +14,8 @@ args = parser.parse_args()
 print("merging npzs")
 _images_mean = []
 _images_var = []
-_bboxes_mean = []
-_bboxes_var = []
+_coords_mean = []
+_coords_var = []
 _transitions = []
 
 with np.load(args.npzs[0]) as data:
@@ -34,8 +34,8 @@ for npz in tqdm.tqdm(args.npzs):
         # [:l] ignores the final data point when the dataset contains an odd number of elements
         _images_mean.append(data["images_mean"][:l])
         _images_var.append(data["images_var"][:l])
-        _bboxes_mean.append(data["bboxes_mean"][:l])
-        _bboxes_var.append(data["bboxes_var"][:l])
+        _coords_mean.append(data["coords_mean"][:l])
+        _coords_var.append(data["coords_var"][:l])
         _transitions.append(data["transitions"][:l]+count) # shift the state id
         count += l
 
@@ -43,8 +43,8 @@ for npz in tqdm.tqdm(args.npzs):
 np.savez_compressed(args.out,
                     images_mean=np.concatenate(_images_mean,axis=0),
                     images_var=np.concatenate(_images_var,axis=0),
-                    bboxes_mean=np.concatenate(_bboxes_mean,axis=0),
-                    bboxes_var=np.concatenate(_bboxes_var,axis=0),
+                    coords_mean=np.concatenate(_coords_mean,axis=0),
+                    coords_var=np.concatenate(_coords_var,axis=0),
                     picsize=picsize,
                     patch_shape=patch_shape,
                     num_samples_per_state=num_samples_per_state,

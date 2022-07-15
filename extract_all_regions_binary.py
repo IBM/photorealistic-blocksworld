@@ -153,6 +153,8 @@ def main(args):
     images_var = images.var(axis=1) # [0, 2^16-1]
     patches_var = patches.var(axis=1)
     bboxes_var = bboxes.var(axis=1)
+    coords_mean = bboxes_to_coord(bboxes_mean,"mean")
+    coords_var = bboxes_to_coord(bboxes_var,"variance")
 
     images_mean2 = images_mean.reshape((num_transitions, 2, *picsize))
     images_std2  = images_std.reshape((num_transitions, 2, *picsize))
@@ -168,7 +170,7 @@ def main(args):
         save_as = save_as_dataset
     save_as(args,samples,num_states,num_transitions,
             patches_mean,patches_var,
-            bboxes_mean,bboxes_var,
+            coords_mean,coords_var,
             picsize)
 
     pass
@@ -176,7 +178,7 @@ def main(args):
 def save_as_dataset(args,
                     samples,num_states,num_transitions,
                     patches_mean,patches_var,
-                    bboxes_mean,bboxes_var,
+                    coords_mean,coords_var,
                     picsize):
 
     np.savez_compressed(args.out,
@@ -184,8 +186,8 @@ def save_as_dataset(args,
                         # an artifact of history of changes.
                         images_mean=patches_mean.astype(np.uint8),
                         images_var=patches_var.astype(np.uint16),
-                        bboxes_mean=bboxes_mean.astype(np.uint16),
-                        bboxes_var=bboxes_var.astype(np.uint32),
+                        coords_mean=coords_mean.astype(np.uint16),
+                        coords_var=coords_var.astype(np.uint32),
                         # metadata
                         picsize=picsize,
                         patch_shape=[*args.resize,3],
@@ -198,14 +200,12 @@ def save_as_dataset(args,
 def save_as_problem(args,
                     samples,num_states,num_transitions,
                     patches_mean,patches_var,
-                    bboxes_mean,bboxes_var,
+                    coords_mean,coords_var,
                     picsize):
 
     B,O,H,W,C = patches_mean.shape
     patches_mean = patches_mean.reshape((B,O,H*W*C)) / 255
     patches_var  = patches_var.reshape((B,O,H*W*C)) / (255*255)
-    coords_mean = bboxes_to_coord(bboxes_mean,"mean")
-    coords_var = bboxes_to_coord(bboxes_var,"variance")
     states_mean = np.concatenate((patches_mean,coords_mean),axis=-1)
     states_var = np.concatenate((patches_var,coords_var),axis=-1)
     states = np.concatenate((states_mean,states_var),axis=-1)
