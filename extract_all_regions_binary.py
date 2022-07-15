@@ -31,7 +31,10 @@ parser.add_argument('--num-samples-per-state', default=5, type=int,
                     help="The number of images to render per logical states")
 
 
-def preprocess(mode,rgb):
+def preprocess(args,rgb):
+    if not args.preprocess:
+        args.preprocess_mode = 0
+    mode = args.preprocess_mode
     if mode == 0:
         return rgb
     elif mode == 1:
@@ -117,8 +120,7 @@ def main(args):
         imagefile = os.path.join(args.dir,"image_tr",scene["image_filename"])
         image_ubyte = imageio.imread(imagefile)[:,:,:3] # range: [0,   255]
         image = img_as_float(image_ubyte)               # range: [0.0, 1.0]
-        if args.preprocess:
-            image = preprocess(args.preprocess_mode,image)
+        image = preprocess(args,image)
         assert(picsize==image.shape)
         images[i] = image_ubyte
         if args.include_background:
