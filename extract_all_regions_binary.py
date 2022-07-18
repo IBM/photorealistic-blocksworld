@@ -161,6 +161,8 @@ def main(args):
     os.makedirs(os.path.join(args.dir,"distr_tr"),exist_ok=True)
     for i in tqdm.tqdm(range(num_transitions)):
         for presuc,j in (("pre",0),("suc",1)):
+            if os.path.exists(path("distr_tr",start_idx+i,presuc,"mean","png")):
+                continue
             imageio.imwrite(path("distr_tr",start_idx+i,presuc,"mean","png"), img_as_ubyte(images_mean2[i,j]/255))
             imageio.imwrite(path("distr_tr",start_idx+i,presuc,"std","png"), img_as_ubyte(images_std2[i,j]/255))
 
