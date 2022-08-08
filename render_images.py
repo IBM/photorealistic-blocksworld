@@ -87,12 +87,14 @@ def main(args):
         # if we want to extend the number of samples, load these fils and performs a wiggle.
         if os.path.exists(path("scene_tr",i,"pre","---","json")):
           assert os.path.exists(path("scene_tr",i,"suc","---","json"))
+          print("base scene available; loading scene")
           with open(path("scene_tr",i,"pre","---","json"),"r") as f:
             pre = State.undump(json.load(f))
           with open(path("scene_tr",i,"suc","---","json"),"r") as f:
             suc = State.undump(json.load(f))
         else:
           assert not os.path.exists(path("scene_tr",i,"suc","---","json"))
+          print("base scene not found; creating a new scene")
           pre = State(args)
           suc = copy.deepcopy(pre)
           for j in range(args.num_steps):
